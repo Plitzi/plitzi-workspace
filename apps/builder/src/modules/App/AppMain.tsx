@@ -8,8 +8,9 @@ import { InteractionsSourcesProvider } from '@plitzi/sdk-interactions';
 import { declaredExperiments } from '@plitzi/sdk-shared/experiments';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import { keptOnReload } from '@pmodules/StateManager/helpers';
+import usePreviewDraws from '@pmodules/StateManager/hooks/usePreviewDraws';
 import useSimulatedVisitor from '@pmodules/StateManager/hooks/useSimulatedVisitor';
-import { drawnAgain } from '@pmodules/StateManager/previewDraws';
+import { withDraws } from '@pmodules/StateManager/previewDraws';
 
 import AppContainer from './AppContainer';
 import AppContext from './AppContext';
@@ -63,12 +64,12 @@ const AppMain = ({
     setMotionReplays(count => count + 1);
   }, []);
   const [pageLoads, setPageLoads] = useState(0);
-  const [getRuntimeState, getSettings, getSchema, getShown, getDrawn] = useBuilderStoreGetter([
+  const [getRuntimeState, getSettings, getSchema, getShown, getPicked] = useBuilderStoreGetter([
     'runtime.state',
     'schema.settings',
     'schema',
     'experiments.qa',
-    'previewDrawn'
+    'previewPicked'
   ]);
   const [, setRuntimeState] = useBuilderStore('runtime.state');
   const [, setShown] = useBuilderStore('experiments.qa');
@@ -77,19 +78,18 @@ const AppMain = ({
     setPageLoads(count => count + 1);
   }, [getRuntimeState, getSettings, setRuntimeState]);
   const newVisitor = useCallback(() => {
-    const drawn = getDrawn() ?? [];
-    if (drawn.length > 0) {
-      setShown(drawnAgain(declaredExperiments(getSchema()), drawn, getShown() ?? {}));
-    }
+    // A first visit: every test nobody picked a variant of drawn again by its shares.
+    setShown(withDraws(declaredExperiments(getSchema()), getShown() ?? {}, getPicked() ?? [], { fresh: true }));
 
     setRuntimeState({});
     setPageLoads(count => count + 1);
-  }, [getDrawn, getSchema, getShown, setRuntimeState, setShown]);
+  }, [getPicked, getSchema, getShown, setRuntimeState, setShown]);
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
   useBuilderStoreSync('displayMode', displayMode);
   useSimulatedVisitor(displayMode);
+  usePreviewDraws(previewMode);
   // The surface this render happens on, published for the whole tree — the shared providers (auth, navigation,
   // global sources, interactions) read it from here instead of taking it as props from each surface that mounts them.
   useBuilderStoreSync(

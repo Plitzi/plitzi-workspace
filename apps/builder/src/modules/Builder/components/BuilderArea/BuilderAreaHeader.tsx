@@ -176,7 +176,7 @@ const BuilderAreaHeader = ({
           </button>
           <button
             type="button"
-            title="New visitor — a first visit: nothing kept, and the variants set to Draw drawn again by their shares"
+            title="New visitor — a first visit: nothing kept, and every test not picked by hand drawn again by its shares"
             aria-label="Show the page to a new visitor"
             className="text-ui-fg-subtle hover:text-ui-fg flex"
             onClick={newVisitor}

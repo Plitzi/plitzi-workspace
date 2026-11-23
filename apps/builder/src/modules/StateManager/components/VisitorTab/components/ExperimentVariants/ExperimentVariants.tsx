@@ -13,31 +13,51 @@ import type { ExperimentAssignments } from '@plitzi/sdk-shared/experiments';
 
 const NONE: ExperimentAssignments = {};
 
-const OWN = 'own';
+const NO_NAMES: string[] = [];
+
+const DRAW = 'draw';
 
 type ExperimentRowProps = {
   name: string;
   weights: number[];
-  forced: ExperimentAssignments;
-  onForce: (next: ExperimentAssignments) => void;
+  shown: ExperimentAssignments;
+  picked: string[];
+  onShow: (shown: ExperimentAssignments, picked: string[]) => void;
 };
 
-const ExperimentRow = ({ name, weights, forced, onForce }: ExperimentRowProps) => {
+const ExperimentRow = ({ name, weights, shown, picked, onShow }: ExperimentRowProps) => {
+  const isPicked = picked.includes(name);
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+
+  // A variant picked by hand sets the shares aside; Draw lets them decide again — the preview draws it anew.
   const handleChange = useCallback(
-    (value: string) => onForce(withForcedExperiment(forced, name, isExperimentVariant(value) ? value : undefined)),
-    [forced, name, onForce]
+    (value: string) => {
+      const others = picked.filter(each => each !== name);
+      onShow(
+        withForcedExperiment(shown, name, isExperimentVariant(value) ? value : undefined),
+        isExperimentVariant(value) ? [...others, name] : others
+      );
+    },
+    [name, onShow, picked, shown]
   );
 
+  const now = !isPicked && Object.hasOwn(shown, name) ? ` — now ${shown[name].toUpperCase()}` : '';
+
   return (
-    <Select label={name} value={forced[name] ?? OWN} onChange={handleChange} size="xs">
-      <option value={OWN}>As its settings show it</option>
+    <Select
+      label={name}
+      value={isPicked && Object.hasOwn(shown, name) ? shown[name] : DRAW}
+      onChange={handleChange}
+      size="xs"
+    >
+      <option value={DRAW}>Drawn by its shares{now}</option>
       {weights.map((weight, index) => {
         const variant = variantAt(index);
 
         return (
           variant && (
             <option key={variant} value={variant}>
-              Variant {variant.toUpperCase()} (weight {weight})
+              Variant {variant.toUpperCase()} ({total > 0 ? Math.round((weight / total) * 100) : 0}%)
             </option>
           )
         );
@@ -47,14 +67,23 @@ const ExperimentRow = ({ name, weights, forced, onForce }: ExperimentRowProps) =
 };
 
 /**
- * The variant of each of the space's A/B tests the canvas's visitor is shown in its preview — as each test's settings
- * show it until one is chosen. The builder's forcing: never kept, never a visitor's.
+ * The variant of each of the space's tests by chance the canvas's preview shows: drawn by its shares, as a visitor's
+ * page draws it, until one is picked by hand. The builder's own: never kept, never a visitor's.
  */
 const ExperimentVariants = () => {
   const [[flat, components]] = useBuilderStore(['schema.flat', 'schema.components']);
-  const [forced = NONE, setForced] = useBuilderStore('experiments.qa');
+  const [shown = NONE, setShown] = useBuilderStore('experiments.qa');
+  const [picked = NO_NAMES, setPicked] = useBuilderStore('previewPicked');
   const declared = useMemo(() => declaredExperiments({ flat, components }), [flat, components]);
   const names = Object.keys(declared);
+
+  const handleShow = useCallback(
+    (next: ExperimentAssignments, nextPicked: string[]) => {
+      setPicked(nextPicked);
+      setShown(next);
+    },
+    [setPicked, setShown]
+  );
 
   if (names.length === 0) {
     return null;
@@ -66,7 +95,14 @@ const ExperimentVariants = () => {
         For variants by chance
       </h6>
       {names.map(name => (
-        <ExperimentRow key={name} name={name} weights={declared[name].weights} forced={forced} onForce={setForced} />
+        <ExperimentRow
+          key={name}
+          name={name}
+          weights={declared[name].weights}
+          shown={shown}
+          picked={picked}
+          onShow={handleShow}
+        />
       ))}
     </section>
   );

@@ -63,10 +63,11 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   room, under the address bar's button else. In the preview a reload button loads the page
   again as F5 does: what it set for this visit is emptied, what the space keeps between visits stays, and its loads and
   first flows run once more.
-- **A test drawn in the preview, as a visitor's page draws it.** A test by chance set to **Draw** in the preview's
-  Variants tab is drawn by its shares: **Reload** keeps the variant, as a visitor's cookie does, and **New visitor**
-  (beside it, and in the canvas's address bar) is a first visit — nothing kept, every test set to Draw drawn again — so
-  reloading as new visitors shows each variant in its share.
+- **The preview draws each test as a visitor's page does.** Every test by chance is drawn by its shares when the
+  preview opens; a variant picked in the Variants tab sets the shares aside until **Draw** lets them decide again.
+  **Reload** keeps what was drawn, as a visitor's cookie does, and **New visitor** (beside it, and in the canvas's
+  address bar) is a first visit — nothing kept, every test not picked drawn again — so reloading as new visitors shows
+  each variant in its share.
 - **A test's shares are percents that add up to 100.** Each variant's `weight` is the percent of the visitors it is
   shown to — 50/25/20/5, any split. The Variants panel shows the total, says when it is not 100% and fits the shares to
   it keeping their proportions (`sharesToHundred`), and "Even shares" splits exactly (34/33/33); authoring, the MCP and

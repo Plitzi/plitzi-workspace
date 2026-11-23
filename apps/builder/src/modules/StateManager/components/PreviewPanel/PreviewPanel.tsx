@@ -30,9 +30,9 @@ const PreviewPanel = () => {
   const [pane, setPane] = useState<Pane>('visitor');
   const { reloadPage, newVisitor } = use(AppContext);
   const { visitor } = useCanvasVisitor();
-  const [[simulation, experimentsForced, flagsForced, simulatedAt, queryParams]] = useBuilderStore([
+  const [[simulation, experimentsPicked, flagsForced, simulatedAt, queryParams]] = useBuilderStore([
     'visitorSimulation',
-    'experiments.qa',
+    'previewPicked',
     'flags.overrides.qa',
     'simulatedAt',
     'navigation.queryParams'
@@ -45,7 +45,7 @@ const PreviewPanel = () => {
         <span className="text-ui-fg grow text-xs font-semibold">Try the preview as</span>
         <button
           type="button"
-          title="Reload — as a browser's F5: what the page set for this visit is emptied, what it keeps stays, and so do the variants drawn"
+          title="Reload — as a browser's F5: what the page set for this visit is emptied; what it keeps and the variants drawn stay"
           className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px]"
           onClick={reloadPage}
         >
@@ -54,7 +54,7 @@ const PreviewPanel = () => {
         </button>
         <button
           type="button"
-          title="New visitor — a first visit: nothing kept, and the variants set to Draw drawn again by their shares"
+          title="New visitor — a first visit: nothing kept, and every test not picked by hand drawn again by its shares"
           className="text-ui-fg-subtle hover:text-ui-fg hover:bg-ui-hover flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px]"
           onClick={newVisitor}
         >
@@ -68,7 +68,7 @@ const PreviewPanel = () => {
           size="xs"
           tabs={[
             { id: 'visitor', label: 'Visitor', mark: countMark(visitorSet) },
-            { id: 'variants', label: 'Variants', mark: countMark(Object.keys(experimentsForced ?? {}).length) },
+            { id: 'variants', label: 'Variants', mark: countMark((experimentsPicked ?? []).length) },
             { id: 'flags', label: 'Flags', mark: countMark(Object.keys(flagsForced ?? {}).length) },
             { id: 'date', label: 'Date', mark: countMark(simulatedAt === undefined ? 0 : 1) },
             { id: 'address', label: 'URL', mark: countMark(Object.keys(queryParams).length) }
