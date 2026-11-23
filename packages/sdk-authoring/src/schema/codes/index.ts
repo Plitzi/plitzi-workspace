@@ -25,6 +25,7 @@ import { SPACE_CODES } from './space';
 import { SUGGESTION_CODES } from './suggestions';
 import { TEST_CODES } from './tests';
 import { TIME_WINDOW_CODES } from './timeWindows';
+import { USER_CODES } from './users';
 import { VARIANTS_CODES } from './variantsElements';
 
 import type { AuthoringCodeEntry } from './entry';
@@ -46,6 +47,7 @@ export const AUTHORING_CODES = {
   ...TIME_WINDOW_CODES,
   ...DISCLOSURE_CODES,
   ...COUNTDOWN_CODES,
+  ...USER_CODES,
   ...FLOW_CODES,
   ...SERVER_CODES,
   ...ACCESSIBILITY_CODES,

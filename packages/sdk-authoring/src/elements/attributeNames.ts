@@ -8,6 +8,7 @@
  * a builder that has since moved on, and nothing renders it.
  */
 export const elementAttributeNames = {
+  account: ['signInHref', 'signInLabel', 'signOutHref', 'signOutLabel'],
   apiContainer: [
     'accessToken',
     'action',
@@ -35,6 +36,7 @@ export const elementAttributeNames = {
     'subType',
     'when'
   ],
+  avatar: ['decorative', 'name', 'src'],
   blockHtml: ['content'],
   blockJsx: ['allowEmptyRender', 'content', 'contentCache', 'props'],
   button: [
@@ -447,6 +449,18 @@ export const elementAttributeNames = {
   plitziSdk: ['environment', 'offlineData', 'spaceKey'],
   reference: ['referenceId', 'referenceType'],
   richText: ['content', 'format', 'mediaBaseUrl'],
+  signInForm: [
+    'blockedMessage',
+    'codeLabel',
+    'networkMessage',
+    'passwordLabel',
+    'redirectTo',
+    'ssoMessage',
+    'submitLabel',
+    'unverifiedMessage',
+    'usernameLabel',
+    'wrongMessage'
+  ],
   svg: ['content', 'label'],
   tabContainer: [],
   tabContainerBody: [],

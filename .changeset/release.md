@@ -2,8 +2,8 @@
 '@plitzi/cli': patch
 ---
 
-Variants are a Structure element; a new `disclosure` opens and closes what it holds, and a `countdown` says how long is
-left.
+Variants are a Structure element; a new `disclosure` opens and closes what it holds, a `countdown` says how long is
+left, and a new User category holds `avatar`, `account` and `signInForm`.
 
 ## Elements
 
@@ -25,3 +25,9 @@ left.
   its offset (`countdown-to`) and warns of one with nothing to count to (`countdown-without-end`).
 - **`image` takes a `fallbackSrc`**: shown when `src` is empty or does not load, before the SDK's own placeholder; a
   failed `src` is still said on the image (`data-plitzi-failed`).
+- **A User category: `avatar`, `account` and `signInForm`.** `avatar` shows a person by their picture, or their
+  initials on a colour of their own (`name`). `account` is a top bar's corner: "Sign in" for a guest (to `signInHref`
+  with `?redirect=`, or the provider's own sign-in), and for a visitor with a session a menu with their name, address,
+  its children and "Sign out". `signInForm` is the sign-in: one button through Plitzi's provider, an email and a password
+  against a space's own (`basic`), the second factor's code when the account has one, and each refusal said for what it
+  is. `account-sign-in-unreachable` warns of an `account` with nowhere to sign in on a `basic` space.

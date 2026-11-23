@@ -1,0 +1,132 @@
+// The panel's floor in either scheme, as a dropdown's popup has it: an authored style beats it.
+$surface: light-dark(white, oklch(0.21 0.006 285.885));
+$line: light-dark(oklch(0.92 0.004 286.32), oklch(0.32 0.006 285.885));
+$ink: light-dark(oklch(0.21 0.006 285.885), oklch(0.985 0 0));
+$ink-on-ink: light-dark(oklch(0.985 0 0), oklch(0.21 0.006 285.885));
+$hover: light-dark(oklch(0.967 0.001 286.375), oklch(0.274 0.006 286.033));
+
+@mixin styles {
+  .plitzi-component__account {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .plitzi-component__account-sign-in {
+    display: inline-flex;
+    align-items: center;
+    padding-top: 8px;
+    padding-right: 14px;
+    padding-bottom: 8px;
+    padding-left: 14px;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background-color: $ink;
+    color: $ink-on-ink;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .plitzi-component__account-trigger {
+    display: flex;
+    border-top-left-radius: 50%;
+    border-top-right-radius: 50%;
+    border-bottom-left-radius: 50%;
+    border-bottom-right-radius: 50%;
+    cursor: pointer;
+    list-style: none;
+
+    // Safari draws its own triangle through this, whatever `list-style` says.
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  // The trigger's words: its name for a screen reader, beside a face that says nothing.
+  .plitzi-component__account-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .plitzi-component__account-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 220px;
+    padding-top: 8px;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    background-color: $surface;
+    box-shadow:
+      rgba(0, 0, 0, 0.1) 0px 0px 0px 1px,
+      rgba(0, 0, 0, 0.12) 0px 8px 24px;
+  }
+
+  .plitzi-component__account-who {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 8px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid $line;
+  }
+
+  .plitzi-component__account-who-name {
+    font-weight: 600;
+  }
+
+  .plitzi-component__account-who-email {
+    font-size: 0.875em;
+    opacity: 0.7;
+  }
+
+  .plitzi-component__account-sign-out {
+    display: flex;
+    width: 100%;
+    padding-top: 8px;
+    padding-right: 10px;
+    padding-bottom: 8px;
+    padding-left: 10px;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background-color: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background-color: $hover;
+    }
+  }
+}

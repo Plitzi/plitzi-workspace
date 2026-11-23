@@ -143,6 +143,21 @@ const STYLESHEET: Record<string, SlotRules> = {
   variants: root('.plitzi-component__variants'),
   variantItem: root('.plitzi-component__variant-item'),
   timeWindow: root('.plitzi-component__time-window'),
+  avatar: root('.plitzi-component__avatar', { image: ['.plitzi-component__avatar-image'] }),
+  account: root('.plitzi-component__account', {
+    signIn: ['.plitzi-component__account-sign-in'],
+    trigger: ['.plitzi-component__account-trigger'],
+    panel: ['.plitzi-component__account-panel'],
+    identity: ['.plitzi-component__account-who'],
+    signOut: ['.plitzi-component__account-sign-out']
+  }),
+  signInForm: root('.plitzi-component__sign-in-form', {
+    field: ['.plitzi-component__sign-in-form-field'],
+    label: ['.plitzi-component__sign-in-form-label'],
+    input: ['.plitzi-component__sign-in-form-input'],
+    submit: ['.plitzi-component__sign-in-form-submit'],
+    problem: ['.plitzi-component__sign-in-form-problem']
+  }),
   countdown: root('.plitzi-component__countdown', {
     unit: ['.plitzi-component__countdown-unit'],
     value: ['.plitzi-component__countdown-value'],
@@ -228,7 +243,15 @@ const NOT_A_SLOT = new Set([
   '.plitzi-component__controlled-list',
   '.plitzi-component__tab-container-item',
   // The builder's stand-in for a field that has nothing to show on a page.
-  '.input-container__input-hidden--no-preview'
+  '.input-container__input-hidden--no-preview',
+  // An avatar's outline, drawn when there is not even a name: inside its box, sized by it.
+  '.plitzi-component__avatar-outline',
+  // The account's parts inside its slots: the trigger's name for a screen reader, and the name and address in `identity`.
+  '.plitzi-component__account-name',
+  '.plitzi-component__account-who-name',
+  '.plitzi-component__account-who-email',
+  // A sign-in form's column of fields inside its box, which `field` and `submit` style.
+  '.plitzi-component__sign-in-form-fields'
 ]);
 
 /** An element's slots and their rules — none for a type the table does not list, which the first test reports. */

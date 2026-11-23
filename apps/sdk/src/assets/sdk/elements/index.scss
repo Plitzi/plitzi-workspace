@@ -14,6 +14,9 @@
 @use './variants' as variants;
 @use './disclosure' as disclosure;
 @use './countdown' as countdown;
+@use './avatar' as avatar;
+@use './account' as account;
+@use './sign-in-form' as signInForm;
 @use './custom' as custom;
 @use './paragraph' as paragraph;
 @use './block-html' as blockHtml;
@@ -54,6 +57,9 @@
   @include variants.styles;
   @include disclosure.styles;
   @include countdown.styles;
+  @include avatar.styles;
+  @include account.styles;
+  @include signInForm.styles;
   @include custom.styles;
   @include paragraph.styles;
   @include blockHtml.styles;

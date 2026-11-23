@@ -20,6 +20,7 @@ import { lintStyle } from './style';
 import { lintComputed } from './templates';
 import { lintTests } from './tests';
 import { lintTimeWindows } from './timeWindows';
+import { lintUsers } from './users';
 import { lintVariantsElements } from './variantsElements';
 
 import type { LintCatalogs, LintIssue } from './context';
@@ -60,6 +61,7 @@ export const lintSpace = (
   lintTimeWindows(ctx);
   lintDisclosures(ctx);
   lintCountdowns(ctx);
+  lintUsers(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);
   lintDataPaths(ctx);

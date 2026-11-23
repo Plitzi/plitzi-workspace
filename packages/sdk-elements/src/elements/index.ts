@@ -45,6 +45,9 @@ import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
 import TimeWindow from './structure/TimeWindow';
 import Variants from './structure/Variants';
+import Account from './user/Account';
+import Avatar from './user/Avatar';
+import SignInForm from './user/SignInForm';
 
 export * from './advanced/BlockHtml';
 export * from './advanced/BlockJsx';
@@ -85,6 +88,9 @@ export * from './structure/Carousel';
 export * from './structure/TabContainer';
 export * from './structure/TimeWindow';
 export * from './structure/Variants';
+export * from './user/Account';
+export * from './user/Avatar';
+export * from './user/SignInForm';
 
 export {
   NodeHtml,
@@ -105,6 +111,9 @@ export {
   TabContainer,
   TimeWindow,
   Variants,
+  Account,
+  Avatar,
+  SignInForm,
   Carousel,
   Heading,
   Image,

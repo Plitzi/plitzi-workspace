@@ -122,6 +122,15 @@ export const richText = defineElement(elementDeclarations.RichText);
  */
 export const variants = defineElement(elementDeclarations.Variants);
 export const variantItem = defineElement(elementDeclarations.VariantItem);
+/** A person: `avatar({ name: '{{ auth.details.username }}' })` — their picture, or their initials on a colour of their own. */
+export const avatar = defineElement(elementDeclarations.Avatar);
+/**
+ * Who is signed in, in a top bar: `account({ signInHref: '/sign-in', children: [link({ href: '/profile', content:
+ * 'Profile' })] })` — "Sign in" for a guest, a menu for somebody signed in.
+ */
+export const account = defineElement(elementDeclarations.Account);
+/** The space's sign-in: `signInForm({ redirectTo: '/dashboard' })` — one button through Plitzi, a form for `basic`. */
+export const signInForm = defineElement(elementDeclarations.SignInForm);
 export const svg = defineElement(elementDeclarations.Svg);
 export const tabContainer = defineElement(elementDeclarations.TabContainer);
 export const tabContainerBody = defineElement(elementDeclarations.TabContainerBody);

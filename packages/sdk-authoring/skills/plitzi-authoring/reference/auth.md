@@ -18,6 +18,21 @@ console (`[plitzi] auth.login: …`) — read it before suspecting the form.
 On the platform, `userProvider: 'server'` signs in by leaving the page: a `link` with `mode: 'external'` to
 `/auth/sign-in?return=/` sends the visitor to sign in and back, signed in on the space's own host.
 
+## The elements
+
+Three elements say who is visiting, in the builder's User category — use them before writing a sign-in by hand:
+
+- `signInForm({ redirectTo: '/dashboard' })` — the sign-in itself: one button through a provider that signs in out and
+  back (`server`, Plitzi's), an email and a password against the space's own (`basic`), then the code of a second factor
+  when the account has one. Each refusal is said for what it is (`wrongMessage`, `unverifiedMessage`…); signed in, the
+  visitor goes to `redirectTo`, or back to the `?redirect=` of this site they were sent with.
+- `account({ signInHref: '/sign-in', children: [link({ href: '/profile', content: 'Profile' })] })` — a top bar's
+  corner: "Sign in" for a guest (to `signInHref` with `?redirect=`, or the provider's own when empty — a `basic` space
+  needs the page: `account-sign-in-unreachable`), and for somebody signed in their initials opening a menu with their
+  name, address, its children and "Sign out". Nothing while the session is being found out.
+- `avatar({ name: '{{ auth.details.username }}', src })` — a person: their picture, or their initials on a colour of
+  their own; `decorative` beside their name.
+
 ## The steps
 
 ```ts

@@ -55,6 +55,9 @@ import TabContainerItemDeclaration from '../structure/TabContainer/TabContainerI
 import TimeWindowDeclaration from '../structure/TimeWindow/declaration';
 import VariantsDeclaration from '../structure/Variants/declaration';
 import VariantItemDeclaration from '../structure/Variants/VariantItem/declaration';
+import AccountDeclaration from '../user/Account/declaration';
+import AvatarDeclaration from '../user/Avatar/declaration';
+import SignInFormDeclaration from '../user/SignInForm/declaration';
 
 export const elementDeclarations = {
   ApiContainer: ApiContainerDeclaration,
@@ -105,6 +108,9 @@ export const elementDeclarations = {
   TimeWindow: TimeWindowDeclaration,
   Variants: VariantsDeclaration,
   VariantItem: VariantItemDeclaration,
+  Account: AccountDeclaration,
+  Avatar: AvatarDeclaration,
+  SignInForm: SignInFormDeclaration,
   Video: VideoDeclaration
 } as const;
 
@@ -159,6 +165,9 @@ export {
   TimeWindowDeclaration,
   VariantsDeclaration,
   VariantItemDeclaration,
+  AccountDeclaration,
+  AvatarDeclaration,
+  SignInFormDeclaration,
   VideoDeclaration
 };
 

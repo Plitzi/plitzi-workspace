@@ -1,16 +1,16 @@
 import clsx from 'clsx';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
+import useDetails from './useDetails';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
-import type { KeyboardEvent, MouseEvent, ReactNode, RefObject, SyntheticEvent } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 export type DisclosureProps = {
   ref?: RefObject<HTMLElement | null>;
@@ -34,10 +34,6 @@ const withOpen =
   (open: boolean) =>
   <S extends Record<string, unknown>>(state: S): S => ({ ...state, open });
 
-/** Its own summary — the first child, the one the browser opens it with — found from the `<details>`. */
-const summaryOf = (details: HTMLElement | null): HTMLElement | null =>
-  details?.querySelector<HTMLElement>(':scope > summary') ?? null;
-
 /**
  * What it holds, shown or not by its summary: a `<details>`, so it works as the page arrives — before the script, or
  * without one — the browser's find-in-page opens the one that holds what was found, a group (`name`) is an accordion
@@ -56,7 +52,6 @@ const Disclosure = ({
   const {
     settings: { previewMode }
   } = usePlitzi();
-  const [href] = useCommonStore('navigation.href');
   const ownRef = useRef<HTMLElement | null>(null);
   const ref = refProp ?? ownRef;
   // Edited in the builder, what it holds is always there to edit, and its summary selects rather than closes it.
@@ -64,68 +59,14 @@ const Disclosure = ({
 
   const setOpen = useCallback((next: boolean) => setElementState(withOpen(next)), [setElementState]);
 
-  // The browser opened or closed it — its summary pressed, find-in-page, another of its group opening.
-  const handleToggle = useCallback(
-    (event: SyntheticEvent<HTMLElement>) => {
-      const next = event.currentTarget instanceof HTMLDetailsElement && event.currentTarget.open;
-      if (!editing && next !== open) {
-        setOpen(next);
-      }
-    },
-    [editing, open, setOpen]
-  );
-
-  const handleClickCapture = useCallback(
-    (event: MouseEvent<HTMLElement>) => {
-      if (editing && event.target instanceof Element && summaryOf(event.currentTarget)?.contains(event.target)) {
-        event.preventDefault();
-      }
-    },
-    [editing]
-  );
-
-  // Escape closes it — a `<details>` does not by itself — and leaves the focus on its summary, never on what just hid.
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLElement>) => {
-      if (event.key !== 'Escape' || editing || !open) {
-        return;
-      }
-
-      event.stopPropagation();
-      setOpen(false);
-      summaryOf(event.currentTarget)?.focus({ preventScroll: true });
-    },
-    [editing, open, setOpen]
-  );
-
-  useEffect(() => {
-    const details = ref.current;
-    if (!details || editing || !open || !closeOnClickOutside) {
-      return undefined;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (event.target instanceof Node && !details.contains(event.target)) {
-        setOpen(false);
-      }
-    };
-    const document = details.ownerDocument;
-    document.addEventListener('pointerdown', handlePointerDown);
-
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [ref, editing, open, closeOnClickOutside, setOpen]);
-
-  const seenHref = useRef(href);
-  useEffect(() => {
-    if (seenHref.current === href) {
-      return;
-    }
-
-    seenHref.current = href;
-    if (closeOnNavigate && open) {
-      setOpen(false);
-    }
-  }, [href, closeOnNavigate, open, setOpen]);
+  const { onToggle, onClickCapture, onKeyDown } = useDetails({
+    ref,
+    open,
+    setOpen,
+    editing,
+    closeOnClickOutside,
+    closeOnNavigate
+  });
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(
     () => ({
@@ -144,9 +85,9 @@ const Disclosure = ({
       open={editing || open}
       // Grouped only on the page: in the builder every one of a group stays open to be edited.
       name={name && !editing ? name : undefined}
-      onToggle={handleToggle}
-      onClickCapture={handleClickCapture}
-      onKeyDown={handleKeyDown}
+      onToggle={onToggle}
+      onClickCapture={onClickCapture}
+      onKeyDown={onKeyDown}
       interactionCallbacks={interactionCallbacks}
     >
       {children}

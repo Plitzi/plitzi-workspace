@@ -47,6 +47,9 @@ import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings
 import TimeWindow from './structure/TimeWindow/Settings';
 import Variants from './structure/Variants/Settings';
 import VariantItem from './structure/Variants/VariantItem/Settings';
+import Account from './user/Account/Settings';
+import Avatar from './user/Avatar/Settings';
+import SignInForm from './user/SignInForm/Settings';
 
 import type { elementDeclarations } from './declarations';
 import type { FC } from 'react';
@@ -84,6 +87,9 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   timeWindow: TimeWindow,
   variants: Variants,
   variantItem: VariantItem,
+  account: Account,
+  avatar: Avatar,
+  signInForm: SignInForm,
   heading: Heading,
   image: Image,
   video: Video,

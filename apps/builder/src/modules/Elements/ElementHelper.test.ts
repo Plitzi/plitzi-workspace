@@ -129,6 +129,7 @@ describe('the elements panel’s catalog', () => {
 
   it('shows a known category by its name and icon, and a plugin’s by the name it gave', () => {
     expect(categoryDisplay('provider')).toEqual({ label: 'Data', icon: 'fa-solid fa-plug' });
+    expect(categoryDisplay('user')).toEqual({ label: 'User', icon: 'fa-solid fa-user' });
     expect(categoryDisplay('Tickets')).toEqual({ label: 'Tickets', icon: 'fa-solid fa-puzzle-piece' });
   });
 

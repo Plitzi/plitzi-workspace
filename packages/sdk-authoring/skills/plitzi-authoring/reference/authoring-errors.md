@@ -217,6 +217,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 
 | Code | What was wrong | Write instead |
 | --- | --- | --- |
+| `account-sign-in-unreachable` | an `account` with no `signInHref` in a space that signs in with its own provider (`userProvider: "basic"`) — a sign-in there needs a form, so its "Sign in" leads nowhere | `signInHref: '/sign-in'`, the page with the space's `signInForm` |
 | `action-output-path` | a read of `.data` on a provider fed by a server action — it publishes the action’s output at its root, and `.data` is a `query` provider’s answer | the output’s own field — `apiContainer_feed.stories`, not `apiContainer_feed.data.stories` |
 | `animation-name-unknown` | `animation-name` naming keyframes the space does not declare — nothing plays | declare them in the space's `keyframes`, or name one it has |
 | `browser-state-without-keep-state` | `browserState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `browserState` |

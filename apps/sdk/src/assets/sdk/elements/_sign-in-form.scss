@@ -1,0 +1,82 @@
+$surface: light-dark(white, oklch(0.21 0.006 285.885));
+$line: light-dark(oklch(0.871 0.006 286.286), oklch(0.37 0.013 285.805));
+$ink: light-dark(oklch(0.21 0.006 285.885), oklch(0.985 0 0));
+$ink-on-ink: light-dark(oklch(0.985 0 0), oklch(0.21 0.006 285.885));
+$danger: light-dark(oklch(0.505 0.213 27.518), oklch(0.704 0.191 22.216));
+
+@mixin styles {
+  .plitzi-component__sign-in-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 360px;
+  }
+
+  .plitzi-component__sign-in-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .plitzi-component__sign-in-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .plitzi-component__sign-in-form-label {
+    font-size: 0.875em;
+    font-weight: 500;
+  }
+
+  .plitzi-component__sign-in-form-input {
+    padding-top: 8px;
+    padding-right: 10px;
+    padding-bottom: 8px;
+    padding-left: 10px;
+    border: 1px solid $line;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background-color: $surface;
+    color: inherit;
+    font: inherit;
+  }
+
+  .plitzi-component__sign-in-form-submit {
+    padding-top: 10px;
+    padding-right: 14px;
+    padding-bottom: 10px;
+    padding-left: 14px;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background-color: $ink;
+    color: $ink-on-ink;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+
+  .plitzi-component__sign-in-form-problem {
+    margin: 0px;
+    color: $danger;
+    font-size: 0.875em;
+
+    // Nothing to say takes no room: the column's gap around an empty line spaced the button away from nothing.
+    &:empty {
+      display: none;
+    }
+  }
+}
