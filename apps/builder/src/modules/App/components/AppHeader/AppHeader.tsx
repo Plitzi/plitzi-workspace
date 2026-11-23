@@ -18,6 +18,7 @@ import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
 import useSpaceEntitlements, { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
+import { consoleUrlOf } from './consoleUrl';
 import DisplayModeButtons from './DisplayModeButtons';
 import HeaderMenu from './HeaderMenu';
 import HeaderPopover from './HeaderPopover';
@@ -192,6 +193,8 @@ const AppHeader = () => {
 
     return 'https://plitzi.com';
   }, []);
+  const [permanentUrl] = useBuilderStore('schema.definition.permanentUrl');
+  const consoleUrl = consoleUrlOf(origin, permanentUrl, webId);
 
   return (
     <div
@@ -206,7 +209,7 @@ const AppHeader = () => {
         history, the views — that gives way, scrolling inside itself. Nothing is taken out of the bar.
       */}
       <div className="flex h-full min-w-0 shrink [scrollbar-width:none] items-center gap-3 overflow-x-auto overflow-y-hidden">
-        {/* The logo is the builder's menu: the way back to the spaces, the export, the theme. */}
+        {/* The logo is the builder's menu: the way back to the space's console, the export, the theme. */}
         <HeaderMenu
           id="plitzi-logo"
           label="Plitzi menu"
@@ -222,9 +225,9 @@ const AppHeader = () => {
               items: [
                 {
                   id: 'header-back',
-                  label: 'Back to your spaces',
+                  label: 'Back to the space',
                   icon: 'fa-solid fa-arrow-left',
-                  onSelect: () => window.location.assign(`${origin}/spaces`)
+                  onSelect: () => window.location.assign(consoleUrl)
                 },
                 {
                   id: 'header-export',
@@ -429,8 +432,7 @@ const AppHeader = () => {
                         label: 'Domains and targets',
                         detail: 'Add a domain, verify it, say where it is deployed',
                         icon: 'fa-solid fa-globe',
-                        onSelect: () =>
-                          window.open(`${origin}/spaces/${String(webId)}#domains`, '_blank', 'noopener,noreferrer')
+                        onSelect: () => window.open(`${consoleUrl}#domains`, '_blank', 'noopener,noreferrer')
                       }
                     ]
                   }

@@ -50,6 +50,8 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   versions of one place, edited variant by variant. `suggestSpace` knows the built-in parts as `authorSpace` does.
 - **A closed time window, and an audience with no variant for the visitor, take no room.** They kept an empty box,
   which a column's gap spaced the content around: now hidden as a hidden element is, their node kept to open in place.
+- **The builder goes back to the space it was opened for.** Its menu's **Back to the space** opens the space's console
+  (`/spaces/<its address name>`), not the list of every space; **Domains and targets** names it the same way.
 - **The builder's catalogue says which element is a part of another.** An element that only works inside another
   (`ancestorType`: an A/B test's variant, an audience's, a carousel's track) is listed right after it, its icon drawn
   as a piece and "in A/B Test" under its name. A plugin says it the same way — `ancestorType` in its declaration,
