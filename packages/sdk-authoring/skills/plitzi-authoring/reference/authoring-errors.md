@@ -227,6 +227,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `dropdown-without-control` | a dropdown opened from a box or an icon — no keyboard opens it | a `button` as what opens it (`title` if it is only an icon) |
 | `embed-without-title` | an `embed` with no `title` — a frame a screen reader cannot describe | say what it shows in `title` |
 | `experiment-weights-differ` | two `variants` running the same test with different weights — they share it, so one set is ignored | the same weights on both, or a test name of its own for each |
+| `experiment-weights-total` | by chance, `variant`s whose `weight`s do not add up to 100 — each is read as its part of their total | percents adding up to 100: 50/25/20/5, or the proportions the warning gives |
 | `flag-rule-empty` | a flag rule with no conditions — skipped, never read as "always" | give it a condition, or set the flag's `value` instead |
 | `flag-unused` | a declared flag nothing gates on and no template reads | gate what it switches (`flag: 'x'`), or remove it once the feature has shipped |
 | `focus-on-field-box` | a `focus` or `focus-visible` state on a text field's or a select's `input` slot — the box the field is drawn in, which never takes focus, so no ring is ever shown | `'focus-within'` on the same class, or the state on the `field` slot |

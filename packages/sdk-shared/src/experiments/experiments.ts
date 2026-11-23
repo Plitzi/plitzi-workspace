@@ -44,6 +44,30 @@ export const weightOf = (variant: Element): number =>
   isExperimentWeight(variant.attributes.weight) ? variant.attributes.weight : DEFAULT_VARIANT_WEIGHT;
 
 /**
+ * Shares made whole percents that add up to 100, each in proportion to what it was: `[1, 1, 1]` is `[34, 33, 33]`,
+ * `[60, 30, 30]` is `[50, 25, 25]` — the points left after rounding down going to the largest remainders, the first
+ * first. All at 0 stay so: nothing is said of shares that give nobody anything.
+ */
+export const sharesToHundred = (weights: readonly number[]): number[] => {
+  const total = weights.reduce((sum, weight) => sum + Math.max(0, weight), 0);
+  if (total === 0) {
+    return weights.map(() => 0);
+  }
+
+  const exact = weights.map(weight => (Math.max(0, weight) / total) * 100);
+  const shares = exact.map(Math.floor);
+  const left = 100 - shares.reduce((sum, share) => sum + share, 0);
+  const byRemainder = exact
+    .map((value, index) => ({ index, remainder: value - Math.floor(value) }))
+    .sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+  for (const { index } of byRemainder.slice(0, left)) {
+    shares[index] += 1;
+  }
+
+  return shares;
+};
+
+/**
  * The experiment a `variants` element chosen by chance runs: the name it is given — or, until it is given one, the
  * element's own, made a name (`pricing-test` runs `pricing_test`), so a test runs as soon as it is placed. None for a
  * name it was given that is not one (the linter says so).

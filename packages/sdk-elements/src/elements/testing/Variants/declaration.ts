@@ -20,8 +20,8 @@ const declaration = elementDeclaration<VariantsAttributes>()({
       label: 'Variants',
       description:
         'Shows each visitor one of its variants, chosen by chance or by who they are. By chance (`chooseBy: ' +
-        "'chance'`, an A/B test) it holds two to five `variantItem`s, A first: each is shown to its `weight`'s share " +
-        'of the visitors (0–100, against the others’), and a visitor keeps theirs when they reload or come back, ' +
+        "'chance'`, an A/B test) it holds two to five `variantItem`s, A first: each is shown to its `weight` — the " +
+        'percent of the visitors it gets, the variants’ adding up to 100 — and a visitor keeps theirs when they reload or come back, ' +
         'through a cookie. Its `experiment` names it — left empty, the element’s id does — and `{{ experiments.<name> ' +
         "}}` reads the visitor's (`'a'`, `'b'`…). By rules (`chooseBy: 'rules'`) it shows the first variant whose " +
         '`when` the visitor matches: a rule group over what a flag sees — `queryParams.<name>` (`utm_source`…), ' +

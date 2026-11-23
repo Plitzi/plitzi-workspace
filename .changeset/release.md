@@ -63,6 +63,11 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   room, under the address bar's button else. In the preview a reload button loads the page
   again as F5 does: what it set for this visit is emptied, what the space keeps between visits stays, and its loads and
   first flows run once more.
+- **A test's shares are percents that add up to 100.** Each variant's `weight` is the percent of the visitors it is
+  shown to — 50/25/20/5, any split. The Variants panel shows the total, says when it is not 100% and fits the shares to
+  it keeping their proportions (`sharesToHundred`), and "Even shares" splits exactly (34/33/33); authoring, the MCP and
+  the builder warn of shares that do not add up (`experiment-weights-total`). Until they do, each is drawn as its part
+  of their total.
 - **Layers says which variant is on screen.** Under a Variants element each variant reads which it is — A, B… or 1,
   2… — and the one the canvas shows while editing has its icon lit and "on screen" beside it; the others are faded.
 - **Element settings say what they are.** The Settings tab's duplicate "Settings" heading is now the element's name

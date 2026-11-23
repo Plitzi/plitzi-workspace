@@ -89,6 +89,16 @@ describe('lintSpace — Variants by chance', () => {
     expect(lintSpace(spaceWith(hero('hero', [0, 100])))).toEqual({ errors: [], warnings: [] });
   });
 
+  it('experiment-weights-total, saying the shares that keep their proportions', () => {
+    const problem = lintSpace(spaceWith(hero('hero', [60, 30, 30]))).warnings.find(
+      issue => issue.code === 'experiment-weights-total'
+    );
+
+    expect(problem?.message).toContain('60/30/30 — 120%, not 100%');
+    expect(problem?.message).toContain('50/25/25 keeps their proportions');
+    expect(lintSpace(spaceWith(hero('hero', [50, 25, 20, 5])))).toEqual({ errors: [], warnings: [] });
+  });
+
   it('experiment-weights-differ', () => {
     expect(codes(spaceWith(hero('hero'), hero('cta', [60, 40]))).warnings).toContain('experiment-weights-differ');
   });

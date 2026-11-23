@@ -43,6 +43,11 @@ export const VARIANTS_CODES = {
       "by chance, a `variantItem`'s `weight` that is not a whole number from 0 to 100, or variants that all weigh 0",
     fix: '`weight: 50`; 0 shows a variant to nobody, and at least one has to show'
   },
+  'experiment-weights-total': {
+    kind: 'warned',
+    means: 'by chance, `variant`s whose `weight`s do not add up to 100 — each is read as its part of their total',
+    fix: 'percents adding up to 100: 50/25/20/5, or the proportions the warning gives'
+  },
   'experiment-weights-differ': {
     kind: 'warned',
     means: 'two `variants` running the same test with different weights — they share it, so one set is ignored',

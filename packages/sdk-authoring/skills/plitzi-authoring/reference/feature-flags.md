@@ -98,8 +98,9 @@ variants({
 });
 ```
 
-**By chance**, it holds two to five variants — A first, then B… A `weight` (0–100, default 50) is a share against the
-others'. The server draws the visitor's variant and keeps it in a cookie, so a reload or a later visit shows the same,
+**By chance**, it holds two to five variants — A first, then B… A `weight` is the percent of the visitors it
+is shown to, and the variants' add up to 100 — 50/25/20/5, any split (`experiment-weights-total` warns otherwise; 50
+each by default). The server draws the visitor's variant and keeps it in a cookie, so a reload or a later visit shows the same,
 and a visitor keeps theirs when the shares change; 0 shows a variant to nobody, one left with a share ends the test. Its
 `experiment` names the test — left empty, the element's id does (`pricing-test` runs `pricing_test`) — and two with the
 same name show a visitor the same variant (`experiment-weights-differ` warns when their shares disagree). Count a

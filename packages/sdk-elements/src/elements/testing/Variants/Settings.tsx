@@ -11,6 +11,7 @@ import {
   EXPERIMENT_VARIANTS,
   experimentNameOf,
   isExperimentWeight,
+  sharesToHundred,
   variantAt
 } from '@plitzi/sdk-shared/experiments';
 import { hasConditions } from '@plitzi/sdk-shared/flags';
@@ -81,6 +82,8 @@ type RowProps = {
   chooseBy: ChooseBy;
   weight: number;
   percent: number;
+  /** Whether the shares add up to 100: then each is its percent as written, else the one it is read as is said too. */
+  exact: boolean;
   rule: string;
   /** Past the five an A/B test may have: never shown by chance. */
   beyond: boolean;
@@ -99,6 +102,7 @@ const VariantRow = ({
   chooseBy,
   weight,
   percent,
+  exact,
   rule,
   beyond,
   removable,
@@ -136,6 +140,14 @@ const VariantRow = ({
       {beyond && (
         <span className="block text-[10px] text-amber-600 dark:text-amber-400">Never shown: five at most</span>
       )}
+      {chooseBy === 'chance' && !beyond && !exact && (
+        <span
+          title="What it is drawn as while the shares do not add up to 100"
+          className="block text-[10px] text-amber-600 tabular-nums dark:text-amber-400"
+        >
+          read as ≈{percent}%
+        </span>
+      )}
     </button>
     {chooseBy === 'chance' && (
       <>
@@ -149,7 +161,7 @@ const VariantRow = ({
           value={String(weight)}
           onChange={onWeight}
         />
-        <span className="text-ui-fg-muted w-9 shrink-0 text-right text-[11px] tabular-nums">{percent}%</span>
+        <span className="text-ui-fg-muted shrink-0 text-[11px]">%</span>
       </>
     )}
     {chooseBy === 'rules' && (
@@ -221,10 +233,15 @@ const Settings = ({ id = '', chooseBy = 'chance', experiment = '', builderVarian
     [builderHandler, variantElements]
   );
 
-  const handleEven = useCallback(() => {
-    const share = Math.floor(100 / Math.max(1, Math.min(items.length, EXPERIMENT_VARIANTS.length)));
-    items.forEach((_, index) => writeWeight(index, share));
-  }, [items, writeWeight]);
+  // The shares as percents adding up to 100: the same for each, or in the proportions they had.
+  const handleEven = useCallback(
+    () => sharesToHundred(counted.map(() => 1)).forEach((share, index) => writeWeight(index, share)),
+    [counted, writeWeight]
+  );
+  const handleFit = useCallback(
+    () => sharesToHundred(counted).forEach((share, index) => writeWeight(index, share)),
+    [counted, writeWeight]
+  );
 
   const handleAdd = useCallback(() => {
     const declared = componentDefinitions.current[VARIANT_ITEM_TYPE] as
@@ -307,6 +324,7 @@ const Settings = ({ id = '', chooseBy = 'chance', experiment = '', builderVarian
               chooseBy={chooseBy}
               weight={weights[index]}
               percent={index < EXPERIMENT_VARIANTS.length ? percentOf(weights[index], total) : 0}
+              exact={total === 100}
               rule={ruleSummary(rules[index], fields)}
               beyond={chooseBy === 'chance' && index >= EXPERIMENT_VARIANTS.length}
               removable={items.length > fewest}
@@ -317,6 +335,23 @@ const Settings = ({ id = '', chooseBy = 'chance', experiment = '', builderVarian
             />
           ))}
         </ul>
+        {chooseBy === 'chance' && (
+          <div className="flex items-center justify-between gap-2 px-1.5 py-1 text-[11px]">
+            <span
+              className={clsx({
+                'text-ui-fg-subtle': total === 100,
+                'text-amber-600 dark:text-amber-400': total !== 100
+              })}
+            >
+              {total === 100 ? 'Total: 100% of the visitors' : `Total: ${String(total)}% — the shares add up to 100%`}
+            </span>
+            {total !== 100 && total > 0 && (
+              <button type="button" className="text-primary-600 dark:text-primary-300 shrink-0" onClick={handleFit}>
+                Make it 100%
+              </button>
+            )}
+          </div>
+        )}
         <Button size="xs" intent="secondary" className="self-start" disabled={full} onClick={handleAdd}>
           <Button.Icon icon="fa-solid fa-plus" />
           Add a variant
@@ -324,7 +359,7 @@ const Settings = ({ id = '', chooseBy = 'chance', experiment = '', builderVarian
       </div>
       <span className="text-ui-fg-subtle text-xs">
         {chooseBy === 'chance'
-          ? 'A share is out of the total: 90 and 10 show the first to 90% of the visitors. 0 shows a variant to nobody. The eye picks the one the canvas shows while editing; its preview shows the visitor chosen in State Manager → Visitor.'
+          ? 'Each share is a percent of the visitors, and together they add up to 100% — 50, 25, 20 and 5 split them so. 0 shows a variant to nobody. The eye picks the one the canvas shows while editing; its preview shows the visitor chosen in State Manager → Visitor.'
           : 'Select a variant to write its rule: what the visitor’s device, language, first visit or address say. The eye picks the one the canvas shows while editing; its preview shows the visitor chosen in State Manager → Visitor.'}
       </span>
     </div>

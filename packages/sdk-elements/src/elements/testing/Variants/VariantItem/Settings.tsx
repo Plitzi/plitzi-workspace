@@ -109,19 +109,25 @@ const Settings = ({ id = '', weight = DEFAULT_VARIANT_WEIGHT, when = NO_RULES, o
             <Input
               className="w-24"
               type="number"
-              label="Share"
+              label="Share (%)"
               size="xs"
               min={0}
               max={100}
               value={String(weight)}
               onChange={handleWeight}
             />
-            <span className="text-ui-fg-muted pb-1.5 text-xs tabular-nums">= {percent}% of the visitors</span>
+            <span className="text-ui-fg-muted pb-1.5 text-xs">of the visitors</span>
           </div>
-          <span className="text-ui-fg-subtle text-xs">
-            Out of all the variants’ shares together: 90 here and 10 on the other shows this one to 90%. 0 shows it to
-            nobody.
-          </span>
+          {total === 100 ? (
+            <span className="text-ui-fg-subtle text-xs">
+              A percent of the visitors: all the variants’ shares add up to 100%. 0 shows it to nobody.
+            </span>
+          ) : (
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              The variants’ shares add up to {total}%, not 100%: this one is read as {percent}% until they do. Fix them
+              in All variants.
+            </span>
+          )}
         </div>
       )}
       {chooseBy === 'rules' && (

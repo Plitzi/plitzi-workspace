@@ -18,7 +18,7 @@ const declaration = elementDeclaration<VariantItemAttributes>()({
       label: 'Variant',
       description:
         'One of the versions a Variants element chooses between — by chance, shown to its share of the visitors; by ' +
-        'rules, to the visitors its rule matches. Its share is `weight` (0–100, against the others’) and its rule ' +
+        'rules, to the visitors its rule matches. Its share is `weight`, a percent of the visitors (the variants’ add up to 100), and its rule ' +
         '`when` (a rule group; none is everybody else). Only the variant a visitor is shown is drawn.',
       items: []
     },

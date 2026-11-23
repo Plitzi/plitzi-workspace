@@ -2,7 +2,8 @@ import {
   DEFAULT_VARIANT_WEIGHT,
   EXPERIMENT_VARIANTS,
   experimentNameOf,
-  isExperimentWeight
+  isExperimentWeight,
+  sharesToHundred
 } from '@plitzi/sdk-shared/experiments';
 import { hasConditions } from '@plitzi/sdk-shared/flags';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -74,6 +75,15 @@ const lintWeights = (ctx: LintContext, element: Element, variants: Element[]): n
   const weights = counted.map(variant =>
     isExperimentWeight(variant.attributes.weight) ? variant.attributes.weight : DEFAULT_VARIANT_WEIGHT
   );
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  if (total > 0 && total !== 100) {
+    ctx.warn(
+      'experiment-weights-total',
+      `The variants of "${element.id}" share its visitors ${weights.join('/')} — ${String(total)}%, not 100%. Each share is a percent of the visitors and together they add up to 100: ${sharesToHundred(weights).join('/')} keeps their proportions. Until they do, each is read as its part of ${String(total)}.`,
+      element.id
+    );
+  }
+
   if (weights.length > 0 && weights.every(weight => weight === 0)) {
     ctx.error(
       'experiment-weight',

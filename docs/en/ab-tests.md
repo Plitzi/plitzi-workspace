@@ -16,7 +16,7 @@ place; by rules, one at least, the last with no rule for everybody else.
 | `chooseBy` | `variants` | `'chance'` (the default) or `'rules'`. |
 | `experiment` | `variants` | By chance, the test's name: what a visitor's variant is kept under, and what `{{ experiments.<name> }}` reads. Empty, the element's id made a name (`pricing-test` runs `pricing_test`), so a test runs as soon as it is placed. |
 | `builderVariant` | `variants` | The place (from 0) of the variant the builder's canvas shows while editing. Never a visitor's. |
-| `weight` | `variantItem` | By chance, its share of the visitors against the others', 0–100 (default 50). 0 shows it to nobody. |
+| `weight` | `variantItem` | By chance, the percent of the visitors it is shown to (default 50); the variants' add up to 100 — 50/25/20/5, any split. 0 shows it to nobody. Shares that do not add up to 100 are drawn in proportion, and warned of. |
 | `when` | `variantItem` | By rules, the visitors it is for: a rule group. None is everybody else. |
 
 A variant keeps both its `weight` and its `when` whichever way it chooses, so switching loses neither. Only the
@@ -135,7 +135,7 @@ holds. A rolled-out flag answers its own value there; the Feature Flags panel fo
 `variants()` and `variantItem()` write it (`sdk-authoring/src/elements/elements.ts`). `lintVariantsElements` holds each to how it
 chooses (`variants-choose-by`), its variants and nothing else — two to five by chance, one at least by rules
 (`variants-items`) — and a canvas variant it has (`variants-builder-variant`). By chance: a readable test name
-(`experiment-name`; empty is the element's own), a share each and one at least above 0 (`experiment-weight`), and those
+(`experiment-name`; empty is the element's own), a share each and one at least above 0 (`experiment-weight`), shares adding up to 100 (`experiment-weights-total`), and those
 that share a name agreeing on their shares (`experiment-weights-differ`); a template reading an experiment no Variants element
 runs is `experiment-unknown`. By rules: each rule a rule group (`variants-rule`), no variant after one for everybody
 (`variants-unreachable`) and one such at the end (`variants-no-fallback`). `timeWindow()` writes a window, and
