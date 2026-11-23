@@ -23,6 +23,7 @@ import {
   locateClasses as locateClassesUnchecked,
   locateElements as locateElementsUnchecked,
   planFixes as planFixesUnchecked,
+  suggestSpace as suggestSpaceUnchecked,
   validateSpace as validateSpaceUnchecked,
   validateSnippet as validateSnippetUnchecked
 } from './schema';
@@ -41,6 +42,7 @@ import type {
   StepVocabulary,
   Snippet,
   SnippetSpec,
+  Suggestion,
   FixPlan,
   WrittenClass,
   WrittenElement
@@ -282,6 +284,15 @@ export const locateClasses = (spec: SpaceSpec, options: AuthorSpaceOptions = {})
  */
 export const authorSnippet = (spec: SnippetSpec, options: AuthorSpaceOptions = {}): AuthoredSnippet =>
   authorSnippetUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
+
+/**
+ * `suggestSpace`, knowing this SDK's own elements: the parts of an A/B test or an audience side by side are versions of
+ * one place, never offered as a list — what `authorSpace` says of them too.
+ */
+export const suggestSpace = (
+  documents: Parameters<typeof suggestSpaceUnchecked>[0],
+  options: Parameters<typeof suggestSpaceUnchecked>[1] = {}
+): Suggestion[] => suggestSpaceUnchecked(documents, { ancestorTypes: elementAncestorTypes, ...options });
 
 /** `validateSnippet`, holding this SDK's own catalogs — for a manifest authored elsewhere. */
 export const validateSnippet = (snippet: Snippet, options: SpaceValidationOptions = {}): SchemaValidationResult =>

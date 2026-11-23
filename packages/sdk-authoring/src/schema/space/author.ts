@@ -242,7 +242,8 @@ export class SpaceAuthor {
         {
           stylesheets: this.options.stylesheets ?? [],
           families: this.families,
-          pluginTypes: this.options.pluginTypes ?? []
+          pluginTypes: this.options.pluginTypes ?? [],
+          ancestorTypes: this.options.ancestorTypes ?? {}
         }
       ),
       ...withoutQuieted(schema, classOverrides(this, schema, style.mode ?? 'desktop-first'))

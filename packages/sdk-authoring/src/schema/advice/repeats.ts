@@ -240,7 +240,8 @@ const groupBy = (ids: string[], signatures: Map<string, Signatures>, key: 'exact
 export const suggestRepeats = (
   schema: Schema,
   style: Style,
-  families: readonly (readonly string[])[] = []
+  families: readonly (readonly string[])[] = [],
+  ancestorTypes: Readonly<Record<string, string>> = {}
 ): Suggestion[] => {
   const { flat } = schema;
   const pages = new Set(schema.pages);
@@ -303,6 +304,45 @@ export const suggestRepeats = (
     }
 
     return true;
+  };
+
+  /**
+   * The part an element is, or sits in, of the element above it — an `abTestVariant` of its `abTest` — when it is
+   * in one: the version of its place it belongs to.
+   */
+  const versionOf = (id: string): string | undefined => {
+    for (
+      let at: string | undefined = id;
+      at !== undefined && Object.hasOwn(flat, at);
+      at = flat[at].definition.parentId
+    ) {
+      const parent = flat[at].definition.parentId;
+      if (
+        parent !== undefined &&
+        Object.hasOwn(flat, parent) &&
+        ancestorTypes[flat[at].definition.type] === flat[parent].definition.type
+      ) {
+        return at;
+      }
+    }
+
+    return undefined;
+  };
+
+  /** Copies each in a different part of one element: its variants themselves, or one thing written in each. */
+  const versionsOfOnePlace = (ids: readonly string[]): boolean => {
+    const versions = ids.map(versionOf);
+    const owners = new Set(
+      versions.map(version => (version === undefined ? undefined : flat[version].definition.parentId))
+    );
+    const [owner] = owners;
+
+    return (
+      owner !== undefined &&
+      owners.size === 1 &&
+      versions.every(version => version !== undefined) &&
+      new Set(versions).size === versions.length
+    );
   };
 
   const suggestions: Suggestion[] = [];
@@ -372,6 +412,12 @@ export const suggestRepeats = (
 
     const parents = new Set(fresh.map(id => flat[id].definition.parentId));
     const siblings = parents.size === 1;
+    // Versions of one place — an A/B test's variants, or what each of them holds: what an author edits variant by
+    // variant on the canvas, never rows of data (the test takes nothing but its variants) nor one component.
+    if (versionsOfOnePlace(fresh)) {
+      continue;
+    }
+
     // Side by side but wired to different sources or state keys: controls that look alike, not rows of one list.
     if (siblings && new Set(fresh.map(id => signatures.get(id)?.wiring)).size > 1) {
       continue;

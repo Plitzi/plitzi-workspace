@@ -55,7 +55,8 @@ export const suggestSpace = (
   {
     stylesheets = [],
     families = [],
-    pluginTypes = []
+    pluginTypes = [],
+    ancestorTypes = {}
   }: {
     /** The CSS the pages load besides the space's own — its plugins' stylesheets: a token read there is read. */
     stylesheets?: readonly string[];
@@ -66,10 +67,12 @@ export const suggestSpace = (
      * declaration it has — a `custom` element naming one placed it by name.
      */
     pluginTypes?: readonly string[];
+    /** The types that only work inside another, and that type (`elementAncestorTypes`): an A/B test's variants. */
+    ancestorTypes?: Readonly<Record<string, string>>;
   } = {}
 ): Suggestion[] =>
   withoutQuieted(schema, [
-    ...suggestRepeats(schema, style, families),
+    ...suggestRepeats(schema, style, families, ancestorTypes),
     ...suggestContent(schema, style),
     ...suggestCustomCss(schema, style),
     ...suggestCustomCssSlots(schema),

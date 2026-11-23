@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { suggestSpace } from './index';
 import {
+  abTest,
+  abTestVariant,
   apiContainer,
   button,
   component,
@@ -203,6 +205,60 @@ describe('suggestions', () => {
     );
 
     expect(codesOf(unlike)).not.toContain('repeated-shape');
+  });
+  // A demo's pricing test was told to make its variants one list: an A/B test takes nothing but its variants.
+  it('does not take the parts of the element they sit in — an A/B test’s variants — for rows of one list', () => {
+    const plans = (name: string) =>
+      abTestVariant({
+        children: [
+          heading({ content: name, class: 'tile-label' }),
+          text({ content: '$18', class: 'tile-value' }),
+          text({ content: 'A bag a week', class: 'tile-value' }),
+          button({ content: 'Choose', class: 'tile-label' })
+        ]
+      });
+    const spec = space([
+      page('home', [abTest({ experiment: 'pricing', children: [plans('One'), plans('Two'), plans('Three')] })])
+    ]);
+    const shapes = (options: Parameters<typeof authorSpace>[1]) =>
+      authorSpace(spec, options).suggestions.filter(suggestion => suggestion.code === 'repeated-shape');
+
+    expect(shapes({})).not.toEqual([]);
+    expect(shapes({ ancestorTypes: { abTestVariant: 'abTest' } })).toEqual([]);
+  });
+  it('does not take one thing written in each variant of an A/B test for one component: they are its versions', () => {
+    const tile = (name: string) =>
+      container({
+        class: 'tile',
+        children: [
+          heading({ content: name, class: 'tile-label' }),
+          text({ content: '$18', class: 'tile-value' }),
+          text({ content: 'A bag a week', class: 'tile-value' }),
+          text({ content: 'Pause any time', class: 'tile-value' }),
+          text({ content: 'Whole bean', class: 'tile-value' }),
+          text({ content: 'Ground', class: 'tile-value' }),
+          button({ content: 'Choose', class: 'tile-label' })
+        ]
+      });
+    const inVariants = space([
+      page('home', [
+        abTest({
+          experiment: 'pricing',
+          children: [abTestVariant({ children: [tile('One')] }), abTestVariant({ children: [tile('Two')] })]
+        })
+      ])
+    ]);
+    // The same two tiles out of any test are copies, and still said.
+    const apart = space([
+      page('home', [container({ children: [tile('One')] }), container({ children: [tile('Two')] })])
+    ]);
+    const shapes = (spec: SpaceSpec) =>
+      authorSpace(spec, { ancestorTypes: { abTestVariant: 'abTest' } }).suggestions.filter(
+        suggestion => suggestion.code === 'repeated-shape'
+      );
+
+    expect(shapes(inVariants)).toEqual([]);
+    expect(shapes(apart)).not.toEqual([]);
   });
   it('does not take forms asking for different kinds of field for one component: a date field is no number field', () => {
     const form = (fields: ('text' | 'date' | 'number' | 'select' | 'textarea')[]) =>
