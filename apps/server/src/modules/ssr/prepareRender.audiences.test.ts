@@ -20,16 +20,16 @@ const element = (
 
 const byDevice = { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] };
 
-/** A home page holding an audience — one variant for phones, one for everybody else — and a time window. */
+/** A home page holding a Variants element by rules — one variant for phones, one for everybody else — and a time window. */
 const space = (): OfflineDataRaw =>
   ({
     schema: {
       flat: {
         home: element('home', 'page', ['welcome', 'sale'], { slug: '', folder: '', default: true }),
         sale: element('sale', 'timeWindow', [], { startsAt: '2026-12-01T09:00:00Z' }),
-        welcome: element('welcome', 'audience', ['phones', 'rest']),
-        phones: element('phones', 'audienceVariant', [], { when: byDevice }),
-        rest: element('rest', 'audienceVariant')
+        welcome: element('welcome', 'variants', ['phones', 'rest'], { chooseBy: 'rules' }),
+        phones: element('phones', 'variantItem', [], { when: byDevice }),
+        rest: element('rest', 'variantItem')
       },
       pages: ['home'],
       pageFolders: [],

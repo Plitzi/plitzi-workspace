@@ -46,8 +46,14 @@ const ElementFlagGate = ({ gate, flagNames: names, isPage = false, onUpdate }: E
   return (
     <div className="flex flex-col gap-1">
       <div className="flex gap-2">
-        <Select className="grow" size="xs" label="Feature flag" value={gate?.name ?? ''} onChange={handleChangeName}>
-          <option value="">Always rendered</option>
+        <Select
+          className="grow"
+          size="xs"
+          label="Feature flag (optional)"
+          value={gate?.name ?? ''}
+          onChange={handleChangeName}
+        >
+          <option value="">None — not tied to a flag</option>
           {names.map(name => (
             <option key={name} value={name}>
               {name}
@@ -56,7 +62,7 @@ const ElementFlagGate = ({ gate, flagNames: names, isPage = false, onUpdate }: E
           {undeclared && <option value={gate.name}>{`${gate.name} (not declared)`}</option>}
         </Select>
         {gate && (
-          <Select size="xs" label="Rendered when" value={gate.is ? 'on' : 'off'} onChange={handleChangeIs}>
+          <Select size="xs" label="Shown while it is" value={gate.is ? 'on' : 'off'} onChange={handleChangeIs}>
             <option value="on">On</option>
             <option value="off">Off</option>
           </Select>

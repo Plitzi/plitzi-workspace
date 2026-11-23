@@ -38,8 +38,6 @@ The space is not written until these are fixed.
 | `as-without-from` | `as` with no `from` — `as` is how the source `from` names is shown | `from: 'products.item.price', as: 'price'` |
 | `attribute-kind` | text where a flag or a list is read | `disabled: true`, not `'true'`; `items: [ … ]` |
 | `attribute-value` | a value outside the attribute's list (`subType: 'h7'`) | one of the listed values |
-| `audience-rule` | an `audienceVariant`'s `when` that is not a rule group | `when: { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] }` |
-| `audience-variants` | an `audience` holding no `audienceVariant`, or something else beside them — never shown | `audience({ children: [audienceVariant({ when, children }), audienceVariant([…])] })` |
 | `binding-category` | a binding `category` that does not exist | one of the categories it lists |
 | `binding-shape` | a binding with no `to` or no `source` | `bind: { content: 'posts.item.title' }`, or `bindTemplate(to, source, template)` |
 | `binding-source-out-of-scope` | a source read by an element that is not inside the element publishing it | move the element inside it, or share the value through `state` |
@@ -78,10 +76,9 @@ The space is not written until these are fixed.
 | `element-runtime` | a `runtime` the element does not run in | one of the values the message lists |
 | `element-shape` | an element that is not an object with a `type`, `attributes` and a list of `children` | build elements with their factories — `text(…)`, `container(…)` |
 | `element-slot-unknown` | a `slots` key the element type does not have — its class would dress nothing | one of the slots `plitzi explain <type>` lists; the element itself takes `class` |
-| `experiment-name` | an `abTest`'s `experiment` that a template cannot read as `experiments.x` | letters, digits and `_`, starting with a letter or `_` |
-| `experiment-unknown` | a template, a binding or a `when` reading an experiment no `abTest` runs — it reads as nothing | the name it suggests, or an `abTest` with that `experiment` |
-| `experiment-variants` | an `abTest` that does not hold two to five `abTestVariant`s — A first, then B… — and nothing else | `abTest({ experiment, children: [abTestVariant([…]), abTestVariant([…])] })` |
-| `experiment-weight` | an `abTestVariant`'s `weight` that is not a whole number from 0 to 100, or a test whose variants all weigh 0 | `weight: 50`; 0 shows a variant to nobody, and at least one has to show |
+| `experiment-name` | by chance, a `variants`' `experiment` that a template cannot read as `experiments.x` | letters, digits and `_`, starting with a letter or `_` — or empty, for the element's own name |
+| `experiment-unknown` | a template, a binding or a `when` reading an experiment no `variants` chosen by chance runs | the name it suggests, or a `variants` with that `experiment` |
+| `experiment-weight` | by chance, a `variantItem`'s `weight` that is not a whole number from 0 to 100, or variants that all weigh 0 | `weight: 50`; 0 shows a variant to nobody, and at least one has to show |
 | `flag-gate` | an element's or a page's `flag` that is not a flag name | `flag: 'newCheckout'`, or `flag: '!newCheckout'` for "only while off" |
 | `flag-name` | a flag whose name a template cannot read as `flags.x` | letters, digits and `_` |
 | `flag-rollout` | a flag's `rollout` that is not `{ percent, value }` — a whole share from 0 to 100 and the answer it gives | `rollout: { percent: 10, value: true }` |
@@ -201,6 +198,9 @@ The space is not written until these are fixed.
 | `unknown-transformer` | a transformer that does not exist | one of the transformers it lists |
 | `utility-module` | a utility sent to a module — a utility takes none | drop the `on` |
 | `variant-bound-twice` | two bindings (`variantFrom`, `activeOn`, `activeWhen`) setting the variant of one class on one element — the second always wins | one `variantFrom` whose template answers every case: `{{ wide ? 'roomy' : current ? 'active' : 'idle' }}`; two things that change apart (a size, a lit state) are two classes, each with its own `variantFrom` |
+| `variants-choose-by` | a `variants`' `chooseBy` that is neither `'chance'` nor `'rules'` — it chooses by chance | `chooseBy: 'chance'` or `chooseBy: 'rules'` |
+| `variants-items` | a `variants` holding something beside its `variantItem`s, or too few — two to five by chance, one by rules | `variants({ children: [variantItem([…]), variantItem([…])] })` |
+| `variants-rule` | a `variantItem`'s `when` that is not a rule group | `when: { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] }` |
 | `visibility-as-attribute` | `visibility` bound as an attribute, which no element reads | `visible: { source, template }` |
 | `visible-expression` | `visible` written as an expression (`"state.plan == 'pro'"`, `"a && !b"`) — it takes a source, read as one, which resolves to nothing | `visible: { source: 'state.plan', template: "{{ state.plan == 'pro' }}" }` — or a source alone, `'state.open'`, `'!state.open'` |
 | `visitor-roles` | `settings.visitorRoles` written in a shape the runtime does not read | the shape the message gives |
@@ -216,8 +216,6 @@ The space renders, and renders something you probably did not mean. Fix every on
 | --- | --- | --- |
 | `action-output-path` | a read of `.data` on a provider fed by a server action — it publishes the action’s output at its root, and `.data` is a `query` provider’s answer | the output’s own field — `apiContainer_feed.stories`, not `apiContainer_feed.data.stories` |
 | `animation-name-unknown` | `animation-name` naming keyframes the space does not declare — nothing plays | declare them in the space's `keyframes`, or name one it has |
-| `audience-no-fallback` | an `audience` whose every variant has a rule: a visitor matching none is shown nothing | end it with an `audienceVariant` with no `when`, for everybody else |
-| `audience-unreachable` | an `audienceVariant` after one with no conditions, which takes everybody left — it is never shown | move the variant with no conditions last, or give it a rule |
 | `browser-state-without-keep-state` | `browserState` without `keepState` — nothing is kept in the first place | `settings.keepState: true`, or remove `browserState` |
 | `click-on-static-element` | a click flow on a container, text, heading, image or list item — no keyboard reaches it | the flow on a `button` (it holds children) or a `link` |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
@@ -228,9 +226,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `default-content-beside-children` | a button printing its default "Button" beside its children | `content: ''` |
 | `dropdown-without-control` | a dropdown opened from a box or an icon — no keyboard opens it | a `button` as what opens it (`title` if it is only an icon) |
 | `embed-without-title` | an `embed` with no `title` — a frame a screen reader cannot describe | say what it shows in `title` |
-| `experiment-builder-variant` | an `abTest`'s `builderVariant` naming a variant it does not have — the builder shows A | a variant it has: `'a'` up to as many as its `abTestVariant`s |
-| `experiment-unnamed` | an `abTest` with no `experiment` — it runs nothing, and every visitor sees variant A | `experiment: 'heroTest'` |
-| `experiment-weights-differ` | two `abTest`s naming the same experiment with different weights — they share it, so one set is ignored | the same weights on both, or a name of its own for each |
+| `experiment-weights-differ` | two `variants` running the same test with different weights — they share it, so one set is ignored | the same weights on both, or a test name of its own for each |
 | `flag-rule-empty` | a flag rule with no conditions — skipped, never read as "always" | give it a condition, or set the flag's `value` instead |
 | `flag-unused` | a declared flag nothing gates on and no template reads | gate what it switches (`flag: 'x'`), or remove it once the feature has shipped |
 | `focus-on-field-box` | a `focus` or `focus-visible` state on a text field's or a select's `input` slot — the box the field is drawn in, which never takes focus, so no ring is ever shown | `'focus-within'` on the same class, or the state on the `field` slot |
@@ -279,6 +275,9 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `unknown-utility` | a utility that is not one of the built-in ones | one of the built-in utilities |
 | `unknown-variable` | a `var(--x)` nothing in the space declares — the property it is in is dropped | declare it under `variables`, fix the name, or give it a fallback: `var(--x, …)` |
 | `unknown-variant` | a variant no class of the element and no style of its type declares — nothing applies | declare it (`styles(name, { variants: { … } })`), or name one that is |
+| `variants-builder-variant` | a `variants`' `builderVariant` that is not the place of one of its variants — the builder shows the first | the place of a variant it has, from 0 |
+| `variants-no-fallback` | by rules, a `variants` whose every variant has a rule: a visitor matching none is shown nothing | end it with a `variantItem` with no `when`, for everybody else |
+| `variants-unreachable` | by rules, a `variantItem` after one with no rule, which takes everybody left — it is never shown | move the variant with no rule last, or give it one |
 
 ## Suggested
 

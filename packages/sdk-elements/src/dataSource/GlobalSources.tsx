@@ -163,8 +163,8 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   /**
    * --- experiments
    *
-   * The variant (`a` or `b`) each of the space's A/B tests shows this visitor, by the experiment's name: what an `abTest`
-   * draws, and what `{{ experiments.heroTest }}` reads for a flow that reports it. Published before `computed`.
+   * The variant (`a`, `b`…) each of the space's tests by chance shows this visitor, by the experiment's name: what a
+   * `variants` element chosen by chance draws, and what `{{ experiments.heroTest }}` reads for a flow that reports it. Published before `computed`.
    */
   const experimentsValue = useExperiments();
   const experimentsFields = useCallback(

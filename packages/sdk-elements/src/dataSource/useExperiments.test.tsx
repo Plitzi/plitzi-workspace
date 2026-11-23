@@ -17,14 +17,14 @@ const node = (id: string, type: string, attributes: Record<string, unknown>, ite
   definition: { rootId: id, label: type, type, styleSelectors: { base: '' }, items }
 });
 
-/** An A/B test with two variants of equal weight. */
-const abTest = (id: string, experiment: string, builderVariant = 'a') => ({
-  [id]: node(id, 'abTest', { experiment, builderVariant }, [`${id}A`, `${id}B`]),
-  [`${id}A`]: node(`${id}A`, 'abTestVariant', { weight: 50 }),
-  [`${id}B`]: node(`${id}B`, 'abTestVariant', { weight: 50 })
+/** A test by chance with two variants of equal weight. */
+const abTest = (id: string, experiment: string, builderVariant = 0) => ({
+  [id]: node(id, 'variants', { experiment, builderVariant }, [`${id}A`, `${id}B`]),
+  [`${id}A`]: node(`${id}A`, 'variantItem', { weight: 50 }),
+  [`${id}B`]: node(`${id}B`, 'variantItem', { weight: 50 })
 });
 
-const flat = { ...abTest('hero', 'heroTest', 'b'), ...abTest('price', 'pricing') };
+const flat = { ...abTest('hero', 'heroTest', 1), ...abTest('price', 'pricing') };
 
 const clearCookie = () => {
   document.cookie = `${cookie()}=; Path=/; Max-Age=0`;

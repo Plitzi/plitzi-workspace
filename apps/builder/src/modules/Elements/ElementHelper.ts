@@ -109,7 +109,7 @@ export const summaryOf = (definition: ComponentDefinition): string => {
 
   const sentence = end === -1 ? description : `${description.slice(0, end)}.`;
 
-  // A tooltip is plain text: a name written as code (`abTestVariant`) reads as the name.
+  // A tooltip is plain text: a name written as code (`variantItem`) reads as the name.
   return sentence.replaceAll('`', '');
 };
 
@@ -131,7 +131,7 @@ const typeOf = (definition: ComponentDefinition): string => definition.definitio
 export type CatalogEntry = { definition: ComponentDefinition; partOf?: string };
 
 /**
- * One category's elements by their label, each part right after the element it goes inside — A/B Test, then its
+ * One category's elements by their label, each part right after the element it goes inside — Variants, then its
  * variant — so the catalog shows which is the container. A part whose container is listed elsewhere keeps its place.
  */
 const containersFirst = (

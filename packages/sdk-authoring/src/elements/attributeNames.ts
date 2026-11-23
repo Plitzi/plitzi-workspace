@@ -8,8 +8,6 @@
  * a builder that has since moved on, and nothing renders it.
  */
 export const elementAttributeNames = {
-  abTest: ['builderVariant', 'experiment'],
-  abTestVariant: ['weight'],
   apiContainer: [
     'accessToken',
     'action',
@@ -37,8 +35,6 @@ export const elementAttributeNames = {
     'subType',
     'when'
   ],
-  audience: ['builderVariant'],
-  audienceVariant: ['when'],
   blockHtml: ['content'],
   blockJsx: ['allowEmptyRender', 'content', 'contentCache', 'props'],
   button: [
@@ -456,5 +452,7 @@ export const elementAttributeNames = {
   text: ['content', 'decorative', 'title'],
   themeToggle: ['darkLabel', 'lightLabel', 'showSystem', 'subType', 'systemLabel'],
   timeWindow: ['endsAt', 'startsAt'],
+  variantItem: ['weight', 'when'],
+  variants: ['builderVariant', 'chooseBy', 'experiment'],
   video: ['autoPlay', 'loop', 'muted', 'playsInline', 'src']
 } as const satisfies Readonly<Record<string, readonly string[] | null>>;

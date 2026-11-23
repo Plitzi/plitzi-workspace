@@ -1,5 +1,6 @@
 import { requestAuthority } from '@plitzi/sdk-kernel/http';
-import { audienceFactsUsed, audienceKeyOf, AUDIENCE_TYPE, visitorFactsOf } from '@plitzi/sdk-shared/audiences';
+import { audienceFactsUsed, audienceKeyOf, visitorFactsOf } from '@plitzi/sdk-shared/audiences';
+import { chooseByOf, variantsElementsOf } from '@plitzi/sdk-shared/variants';
 
 import type { SSRRequest } from '@plitzi/sdk-kernel/types';
 import type { Schema } from '@plitzi/sdk-shared';
@@ -13,16 +14,15 @@ type SpaceAudiences = { has: boolean; used: VisitorFact[] };
 /** Read once per space as it was read: the object is shared by every render of a revision (the offline-data cache). */
 const audiencesOf = new WeakMap<SpaceTrees, SpaceAudiences>();
 
-/** Whether a space has audiences at all, and the visitor facts their rules read. */
+/** Whether a space has Variants elements chosen by rules (its audiences) at all, and the visitor facts their rules read. */
 export const spaceAudiences = (schema: SpaceTrees): SpaceAudiences => {
   const known = audiencesOf.get(schema);
   if (known) {
     return known;
   }
 
-  const trees = [schema.flat, ...Object.values(schema.components ?? {}).map(component => component.flat)];
   const found = {
-    has: trees.some(flat => Object.values(flat).some(element => element.definition.type === AUDIENCE_TYPE)),
+    has: variantsElementsOf(schema).some(({ element }) => chooseByOf(element.attributes) === 'rules'),
     used: audienceFactsUsed(schema)
   };
   audiencesOf.set(schema, found);

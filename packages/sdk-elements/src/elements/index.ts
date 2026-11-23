@@ -42,9 +42,8 @@ import ModalContainer from './structure/ModalContainer';
 import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
 import TimeWindow from './structure/TimeWindow';
+import Variants from './testing/Variants';
 // Testing
-import AbTest from './testing/AbTest';
-import Audience from './testing/Audience';
 
 export * from './advanced/BlockHtml';
 export * from './advanced/BlockJsx';
@@ -82,8 +81,7 @@ export * from './structure/Pagination';
 export * from './structure/Carousel';
 export * from './structure/TabContainer';
 export * from './structure/TimeWindow';
-export * from './testing/AbTest';
-export * from './testing/Audience';
+export * from './testing/Variants';
 
 export {
   NodeHtml,
@@ -96,14 +94,13 @@ export {
   BlockJsx,
   Page,
   Container,
-  AbTest,
-  Audience,
   FocusGroup,
   LayoutContainer,
   DialogContainer,
   ModalContainer,
   TabContainer,
   TimeWindow,
+  Variants,
   Carousel,
   Heading,
   Image,

@@ -45,7 +45,9 @@ const AudienceFacts = () => {
 
   return (
     <section className="border-ui-line flex flex-col gap-2 border-t pt-2">
-      <h6 className="text-ui-fg-subtle px-1 text-[10px] font-semibold tracking-wider uppercase">For audiences</h6>
+      <h6 className="text-ui-fg-subtle px-1 text-[10px] font-semibold tracking-wider uppercase">
+        For variants by rules
+      </h6>
       <Select label="Device" value={simulation?.device ?? FOLLOWS_CANVAS} onChange={handleDevice} size="xs">
         <option value={FOLLOWS_CANVAS}>As the canvas is sized ({visitor?.device ?? 'desktop'})</option>
         <option value="mobile">Mobile</option>

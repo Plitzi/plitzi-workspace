@@ -69,7 +69,8 @@ const BUDGET = {
   // 153: a visitor's places in the gradual rollouts of the flags (`flags/rollout`), drawn and keyed the same way.
   // 155: what the space's audiences read of a visitor (`audiences`), read off the request and keyed the same way.
   // 157: whether a space shows things by the time (`timeWindows`), drawn at the instant the page renders.
-  '@plitzi/sdk-shared': 157,
+  // 159: the Variants element's own (`variants`): the experiments and the audiences are read off its variants.
+  '@plitzi/sdk-shared': 159,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,

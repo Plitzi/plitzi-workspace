@@ -10,11 +10,11 @@ const node = (id: string, type: string, attributes: Record<string, unknown>, ite
   definition: { rootId: id, label: type, type, styleSelectors: { base: '' }, items }
 });
 
-/** An A/B test whose two variants weigh what is given. */
+/** A Variants element chosen by chance whose two variants weigh what is given. */
 const abTest = (id: string, experiment: string, [a, b]: [number, number]): Record<string, Element> => ({
-  [id]: node(id, 'abTest', { experiment }, [`${id}A`, `${id}B`]),
-  [`${id}A`]: node(`${id}A`, 'abTestVariant', { weight: a }),
-  [`${id}B`]: node(`${id}B`, 'abTestVariant', { weight: b })
+  [id]: node(id, 'variants', { experiment }, [`${id}A`, `${id}B`]),
+  [`${id}A`]: node(`${id}A`, 'variantItem', { weight: a }),
+  [`${id}B`]: node(`${id}B`, 'variantItem', { weight: b })
 });
 
 const space = (flat: Record<string, Element>) => ({ flat, components: {} });

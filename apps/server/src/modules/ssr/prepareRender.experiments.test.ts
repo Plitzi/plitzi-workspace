@@ -18,15 +18,15 @@ const element = (
   definition: { type, label: id, rootId: 'home', items, styleSelectors: { base: '' } }
 });
 
-/** A home page holding one A/B test: half the visitors see B. */
+/** A home page holding one Variants element by chance: half the visitors see B. */
 const space = (): OfflineDataRaw =>
   ({
     schema: {
       flat: {
         home: element('home', 'page', ['hero'], { slug: '', folder: '', default: true }),
-        hero: element('hero', 'abTest', ['heroA', 'heroB'], { experiment: 'heroTest' }),
-        heroA: element('heroA', 'abTestVariant', [], { weight: 50 }),
-        heroB: element('heroB', 'abTestVariant', [], { weight: 50 })
+        hero: element('hero', 'variants', ['heroA', 'heroB'], { experiment: 'heroTest' }),
+        heroA: element('heroA', 'variantItem', [], { weight: 50 }),
+        heroB: element('heroB', 'variantItem', [], { weight: 50 })
       },
       pages: ['home'],
       pageFolders: [],

@@ -1,14 +1,9 @@
 import { isFlagName } from '../flags/schemaFlag';
+import { builderVariantOf, chooseByOf, variantItemsOf, variantsElementsOf, VARIANTS_TYPE } from '../variants/variants';
 
 import type { Element, Schema } from '../types';
 
-/** The element that runs an experiment: a container drawing one of its variants. */
-export const AB_TEST_TYPE = 'abTest';
-
-/** Its parts, in order: the first is variant A (the control), the second B, and so on. */
-export const AB_TEST_VARIANT_TYPE = 'abTestVariant';
-
-/** Every variant an experiment may have, by its place among the test's variants: A first. */
+/** Every variant an experiment may have, by its place among the variants: A first. */
 export const EXPERIMENT_VARIANTS = ['a', 'b', 'c', 'd', 'e'] as const;
 
 export type ExperimentVariant = (typeof EXPERIMENT_VARIANTS)[number];
@@ -38,40 +33,51 @@ export const isExperimentWeight = (value: unknown): value is number =>
 /** A variant's weight when it says none: every variant left as it was gets the same share. */
 export const DEFAULT_VARIANT_WEIGHT = 50;
 
-/** The variant at a place among a test's variants: A at 0. */
+/** The variant at a place among the variants: A at 0. */
 export const variantAt = (index: number): ExperimentVariant | undefined => EXPERIMENT_VARIANTS[index];
 
-/** A variant's place among a test's variants: 0 for A. */
+/** A variant's place among the variants: 0 for A. */
 export const indexOfVariant = (variant: ExperimentVariant): number => EXPERIMENT_VARIANTS.indexOf(variant);
 
-/** A test's variants, in order, as many as there are letters for. */
-export const variantsOf = (element: Element, flat: Schema['flat']): Element[] =>
-  (element.definition.items ?? [])
-    .filter(id => Object.hasOwn(flat, id) && flat[id].definition.type === AB_TEST_VARIANT_TYPE)
-    .map(id => flat[id])
-    .slice(0, EXPERIMENT_VARIANTS.length);
+/** A variant's weight as it is read: its own, or the default share. */
+export const weightOf = (variant: Element): number =>
+  isExperimentWeight(variant.attributes.weight) ? variant.attributes.weight : DEFAULT_VARIANT_WEIGHT;
 
-/** What an `abTest` element runs: its experiment's name and its variants' weights, or nothing for one not named yet. */
+/**
+ * The experiment a `variants` element chosen by chance runs: the name it is given — or, until it is given one, the
+ * element's own, made a name (`pricing-test` runs `pricing_test`), so a test runs as soon as it is placed. None for a
+ * name it was given that is not one (the linter says so).
+ */
+export const experimentNameOf = (element: Pick<Element, 'id' | 'attributes'>): string | undefined => {
+  const { experiment } = element.attributes;
+  if (experiment !== undefined && experiment !== '') {
+    return typeof experiment === 'string' && isExperimentName(experiment) ? experiment : undefined;
+  }
+
+  const fromId = element.id.replace(/[^A-Za-z0-9_]/g, '_');
+  const name = /^[0-9]/.test(fromId) ? `_${fromId}` : fromId;
+
+  return isExperimentName(name) ? name : undefined;
+};
+
+/** What a `variants` element chosen by chance runs: its experiment's name and its variants' weights, A first. */
 export const experimentOf = (
   element: Element,
   flat: Schema['flat']
 ): ({ name: string } & DeclaredExperiment) | undefined => {
-  if (element.definition.type !== AB_TEST_TYPE) {
+  if (element.definition.type !== VARIANTS_TYPE || chooseByOf(element.attributes) !== 'chance') {
     return undefined;
   }
 
-  const { experiment, builderVariant } = element.attributes;
-  if (typeof experiment !== 'string' || !isExperimentName(experiment)) {
+  const name = experimentNameOf(element);
+  if (name === undefined) {
     return undefined;
   }
 
-  const weights = variantsOf(element, flat).map(variant =>
-    isExperimentWeight(variant.attributes.weight) ? variant.attributes.weight : DEFAULT_VARIANT_WEIGHT
-  );
-  const shown =
-    isExperimentVariant(builderVariant) && indexOfVariant(builderVariant) < weights.length ? builderVariant : 'a';
+  const weights = variantItemsOf(element, flat).slice(0, EXPERIMENT_VARIANTS.length).map(weightOf);
+  const shown = variantAt(builderVariantOf(element.attributes, weights.length)) ?? 'a';
 
-  return { name: experiment, weights, builderVariant: shown };
+  return { name, weights, builderVariant: shown };
 };
 
 /**
@@ -84,13 +90,10 @@ export const declaredExperiments = (
   schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'components'>>
 ): Record<string, DeclaredExperiment> => {
   const declared: Record<string, DeclaredExperiment> = {};
-  const trees = [schema.flat, ...Object.values(schema.components ?? {}).map(component => component.flat)];
-  for (const flat of trees) {
-    for (const element of Object.values(flat)) {
-      const experiment = experimentOf(element, flat);
-      if (experiment && !(experiment.name in declared)) {
-        declared[experiment.name] = { weights: experiment.weights, builderVariant: experiment.builderVariant };
-      }
+  for (const { element, flat } of variantsElementsOf(schema)) {
+    const experiment = experimentOf(element, flat);
+    if (experiment && !(experiment.name in declared)) {
+      declared[experiment.name] = { weights: experiment.weights, builderVariant: experiment.builderVariant };
     }
   }
 

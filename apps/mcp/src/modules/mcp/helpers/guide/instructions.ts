@@ -143,10 +143,11 @@ element** (\`mode\` "page"/"internal"/"external"; its words are its \`content\`,
 a \`navigate\` interaction.
 
 **Feature flags:** what a person switches on (a beta, a rollout) is \`upsertFlag\` plus \`flag: "x"\` / \`"!x"\` on the
-element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`. An A/B test is an \`abTest\` (its \`experiment\`)
-holding 2–5 \`abTestVariant\`s, each with a \`weight\` (its share); each visitor keeps their variant, read as
-\`{{ experiments.<experiment> }}\` (\`'a'\`, \`'b'\`…); a \`reachGoal\` step (\`goal\`) counts a conversion. An \`audience\` shows the first \`audienceVariant\` whose \`when\`
-(a flag's rule fields, plus \`visitor.returning\`/\`language\`/\`device\`) matches; end it with one without \`when\`. A \`timeWindow\` shows its children only between \`startsAt\` and \`endsAt\`
+element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`. A \`variants\` shows each visitor one of its
+\`variantItem\`s: by chance (an A/B test, 2–5 variants, each \`weight\` its share; each visitor keeps theirs, read as
+\`{{ experiments.<experiment> }}\` — \`'a'\`, \`'b'\`…, its id when unnamed; a \`reachGoal\` step counts a conversion) or, with
+\`chooseBy: 'rules'\`, the first whose \`when\` (a flag's rule fields, plus \`visitor.returning\`/\`language\`/\`device\`)
+matches; end those with one without \`when\`. A \`timeWindow\` shows its children only between \`startsAt\` and \`endsAt\`
 (ISO 8601 with the offset).
 
 **Accessible by default:** screen readers and browser agents (Claude in Chrome) read the accessibility tree, so every

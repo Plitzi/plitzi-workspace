@@ -101,9 +101,9 @@ const VisitorTab = () => {
         )}
       </div>
       <Notice tone="info">
-        The canvas’s preview shows the page to this visitor: the audience variant they match, the A/B variant chosen
-        below and what shows at the date chosen. While editing, each test and audience shows the variant its own
-        settings name.
+        The canvas’s preview shows the page to this visitor: in each Variants element, the variant their facts match (by
+        rules) or the one chosen below (by chance), and what shows at the date chosen. While editing, each Variants
+        element shows the variant its own settings pick.
       </Notice>
       <AudienceFacts />
       <ExperimentVariants />

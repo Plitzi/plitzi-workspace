@@ -2,8 +2,8 @@ import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/t
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
 
 import { checkActionOutputReads } from './actionOutput';
-import { reportUnknownExperiment } from './experiments';
 import { checkShapedReads, globalFieldsRead, reportUnknownComputed, reportUnknownFlag } from './globalReads';
+import { reportUnknownExperiment } from './variantsElements';
 import { GLOBAL_SOURCES } from '../bindings';
 import { didYouMean } from '../suggest';
 
@@ -81,7 +81,7 @@ const checkComputedReads = (ctx: LintContext, reads: GlobalRead[], where: string
 
 /**
  * Every `flags.<name>` a template reads has to be a flag the space declares, and every `experiments.<name>` an
- * experiment one of its A/B tests runs: one it does not resolves to nothing, so the binding or the condition reading it
+ * experiment one of its Variants elements chosen by chance runs: one it does not resolves to nothing, so the binding or the condition reading it
  * is silently off.
  */
 const checkDeclaredReads = (ctx: LintContext, reads: GlobalRead[], where: string, id?: string) => {

@@ -1,32 +1,40 @@
 # A/B tests, audiences and time windows
 
-An A/B test shows each visitor one of two versions of a part of a page, and keeps showing them the same one. This page
-is how it works across the stack: the element, who draws a visitor's variant, where it is kept, what the page server's
-cache does with it, and what the builder shows. How to write one is the authoring skill's (`feature-flags.md` § A/B
-tests); the element's attributes are its declaration's (`packages/sdk-elements/src/elements/testing/AbTest`).
+A `variants` shows each visitor one of its variants — chosen **by chance** (an A/B test: each variant a share of the
+visitors, and a visitor kept on theirs) or **by rules** (an audience: the first variant whose rule they match). This
+page is how it works across the stack: the element, who draws a visitor's variant, where it is kept, what the page
+server's cache does with it, and what the builder shows. How to write one is the authoring skill's (`feature-flags.md` §
+Variants); the element's attributes are its declaration's (`packages/sdk-elements/src/elements/testing/Variants`).
 
 ## The element
 
-`abTest` holds two to five `abTestVariant`s: the first is A (the control), then B, C, D, E by their place.
+`variants` holds `variantItem`s. By chance it holds two to five — the first is A (the control), then B, C, D, E by their
+place; by rules, one at least, the last with no rule for everybody else.
 
 | Attribute | On | What it is |
 |-----------|----|------------|
-| `experiment` | `abTest` | The experiment's name: what a visitor's variant is kept under, and what `{{ experiments.<name> }}` reads. Empty, the test runs nothing and shows A. |
-| `builderVariant` | `abTest` | The variant the builder's canvas shows, so each can be edited. Never a visitor's. |
-| `weight` | `abTestVariant` | Its share of the visitors against the others' weights, 0–100 (default 50). 0 shows it to nobody. |
+| `chooseBy` | `variants` | `'chance'` (the default) or `'rules'`. |
+| `experiment` | `variants` | By chance, the test's name: what a visitor's variant is kept under, and what `{{ experiments.<name> }}` reads. Empty, the element's id made a name (`pricing-test` runs `pricing_test`), so a test runs as soon as it is placed. |
+| `builderVariant` | `variants` | The place (from 0) of the variant the builder's canvas shows while editing. Never a visitor's. |
+| `weight` | `variantItem` | By chance, its share of the visitors against the others', 0–100 (default 50). 0 shows it to nobody. |
+| `when` | `variantItem` | By rules, the visitors it is for: a rule group. None is everybody else. |
 
-Only the variant a visitor is shown is drawn — the others are absent, not hidden: their providers ask for nothing and
-their words are not in the page. Two tests with the same `experiment` share it: a visitor sees the same variant of both
-(a headline and the button under it), and the first one met gives the weights.
+A variant keeps both its `weight` and its `when` whichever way it chooses, so switching loses neither. Only the
+variant a visitor is shown is drawn — the others are absent, not hidden: their providers ask for nothing and their
+words are not in the page; a visitor no variant is for (by rules, with no "everyone else") sees nothing, and the element
+takes no room. Two Variants elements with the same `experiment` share it: a visitor sees the same variant of both (a headline and
+the button under it), and the first one met gives the weights.
 
 Its category in the builder is **Testing** (`market.category: 'testing'`), the elements a page is measured with rather
-than made of. `plitzi_render`'s offline widgets leave it out: a widget has no visitors to split.
+than made of. Its settings list its variants — by chance with each share and the percent it makes, by rules with each
+rule in words — with the one the canvas shows, and the way to add, select and remove one. `plitzi_render`'s offline
+widgets leave it out: a widget has no visitors to split.
 
 ## Who draws a visitor's variant
 
 One function decides, in `@plitzi/sdk-shared/experiments`, for both the server and the browser:
 `assignExperiments(declared, kept, random)`. For each experiment the space runs (`declaredExperiments`, read off every
-`abTest` of its pages and its components):
+`variants` chosen by chance on its pages and in its components):
 
 1. an experiment with one variant left with a weight is ended: everybody sees it (A when none has any), and nothing is
    kept;
@@ -81,8 +89,8 @@ and the HTML cache is keyed by that cookie, as by the flags a tester forces.
 
 ## Audiences
 
-`audience` holds `audienceVariant`s and shows each visitor the first whose `when` — a rule group, as a flag's — they
-match; one with no conditions matches everybody, the "everyone else" an audience ends with. Its rules see what a flag's
+A `variants` chosen by rules shows each visitor the first `variantItem` whose `when` — a rule group, as a flag's — they
+match; one with no conditions matches everybody, the "everyone else" it ends with. Its rules see what a flag's
 do (`environment`, `hostname`, `routeParams.*`, `queryParams.*` — `utm_source` and the like —, `user.*`) and the
 visitor's facts (`@plitzi/sdk-shared/audiences`): `visitor.returning` (first seen more than a visit — 30 minutes — ago,
 by the `plitzi_seen` cookie the SDK writes once), `visitor.language` (the primary subtag of the first language asked
@@ -94,7 +102,7 @@ The page server reads the facts off the request (`requestVisitorFacts`) and hand
 off is not among the children.
 
 **The page cache.** A page an audience drew is kept apart by the facts its rules read — and only those, only for a
-space whose audiences read any (`audienceFactsUsed`). They are known before the cache is asked only from the space the
+space whose Variants elements by rules read any (`audienceFactsUsed`). They are known before the cache is asked only from the space the
 server holds already (the offline-data cache): the handler sets `ctx.audienceKey`, which the HTML key carries. Asked
 before the space was held, a page an audience drew is kept for nobody (`audienceUnkeyed` in `prepareRender`); every
 later request keys it. The address and the session are in the key already, so rules on `queryParams` or `user` need
@@ -113,10 +121,10 @@ holds is in the space's document.
 ## In the builder
 
 The canvas seeds `render.builder: true` (`apps/builder/src/App.tsx`), and nothing is drawn, read off the visitor's
-cookies or written there. **While editing**, each A/B test shows its `builderVariant` and each audience the variant its
-`builderVariant` names (by place from 0), so every variant can be edited; an empty variant is marked in the canvas as an
+cookies or written there. **While editing**, each Variants element shows the variant its `builderVariant` names (by place from 0,
+picked with the eye in its settings), so every variant can be edited; an empty variant is marked in the canvas as an
 empty tab is. **In the preview**, the canvas shows the page to a simulated visitor, chosen in the State Manager's
-**Visitor** tab: the variant of each A/B test it forces (`experiments.qa`, each test's `builderVariant` until chosen) and
+**Visitor** tab: the variant of each Variants element by chance it forces (`experiments.qa`, each test's `builderVariant` until chosen) and
 the facts the audiences read (`visitorSimulation`, laid over the device the canvas is sized as, the editor's language
 and a first visit — `useSimulatedVisitor`, published as the page's `visitor`) and the date the time windows are read
 at (`simulatedAt`, the page's `clock`; the editor's own until chosen). While editing a time window always shows what it
@@ -124,16 +132,15 @@ holds. A rolled-out flag answers its own value there; the Feature Flags panel fo
 
 ## Authoring and the linter
 
-`abTest()` and `abTestVariant()` write it (`sdk-authoring/src/elements/elements.ts`). `lintExperiments` holds each test
-to a name (`experiment-unnamed`, `experiment-name`), two to five variants and nothing else (`experiment-variants`), a
-weight each and one at least above 0 (`experiment-weight`), a canvas variant it has (`experiment-builder-variant`),
-and tests that share a name to one set of weights (`experiment-weights-differ`); a template reading an
-experiment no test runs is `experiment-unknown`. `audience()` and `audienceVariant()` write an audience, and
-`lintAudiences` holds it to its variants and nothing else (`audience-variants`), each rule a rule group
-(`audience-rule`), no variant after one for everybody (`audience-unreachable`) and one such at the end
-(`audience-no-fallback`). `timeWindow()` writes a window, and `lintTimeWindows` holds its bounds to instants with
-their offset (`time-window-bound`) and its end after its start (`time-window-empty`). The builder's Space Issues, the
-MCP and the publish gate say the same.
+`variants()` and `variantItem()` write it (`sdk-authoring/src/elements/elements.ts`). `lintVariantsElements` holds each to how it
+chooses (`variants-choose-by`), its variants and nothing else — two to five by chance, one at least by rules
+(`variants-items`) — and a canvas variant it has (`variants-builder-variant`). By chance: a readable test name
+(`experiment-name`; empty is the element's own), a share each and one at least above 0 (`experiment-weight`), and those
+that share a name agreeing on their shares (`experiment-weights-differ`); a template reading an experiment no Variants element
+runs is `experiment-unknown`. By rules: each rule a rule group (`variants-rule`), no variant after one for everybody
+(`variants-unreachable`) and one such at the end (`variants-no-fallback`). `timeWindow()` writes a window, and
+`lintTimeWindows` holds its bounds to instants with their offset (`time-window-bound`) and its end after its start
+(`time-window-empty`). The builder's Space Issues, the MCP and the publish gate say the same.
 
 ## Measuring it
 

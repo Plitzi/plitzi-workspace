@@ -42,7 +42,8 @@ export const SOURCE_DOCS: Record<GlobalSource, SourceDoc> = {
     example: '{{ flags.newCheckout }}'
   },
   experiments: {
-    summary: "The variant (`a` or `b`) each of the space's A/B tests shows this visitor, by the experiment's name",
+    summary:
+      "The variant (`a`, `b`…) each of the space's Variants elements chosen by chance show this visitor, by the experiment's name",
     example: "{{ experiments.heroTest == 'b' }}"
   },
   computed: {

@@ -207,7 +207,7 @@ describe('ElementDefinitionSettings / load strategy', () => {
       const { gate, queryByText } = await renderGate([]);
 
       expect(gate).toBeUndefined();
-      expect(queryByText('Always rendered')).toBeNull();
+      expect(queryByText('None — not tied to a flag')).toBeNull();
     });
 
     it('gates the element on a declared flag, and removes the gate', async () => {

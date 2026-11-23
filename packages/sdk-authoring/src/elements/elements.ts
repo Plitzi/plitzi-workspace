@@ -23,21 +23,7 @@ import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
  * which is why their declarations had to be written before they could be authored at all.
  */
 
-/**
- * An A/B test: `abTest({ experiment: 'heroTest', children: [abTestVariant({ weight: 70, children: [a] }),
- * abTestVariant({ weight: 30, children: [b] })] })` — each visitor sees one variant, drawn by the weights, and keeps it
- * when they come back.
- */
-export const abTest = defineElement(elementDeclarations.AbTest);
-export const abTestVariant = defineElement(elementDeclarations.AbTestVariant);
 export const apiContainer = defineElement(elementDeclarations.ApiContainer);
-/**
- * An audience: `audience({ children: [audienceVariant({ when: { combinator: 'and', rules: [{ field: 'visitor.device',
- * operator: '=', value: 'mobile' }] }, children: [phones] }), audienceVariant([everyone])] })` — each visitor sees the
- * first variant whose rule they match; one with no `when` is for everybody else.
- */
-export const audience = defineElement(elementDeclarations.Audience);
-export const audienceVariant = defineElement(elementDeclarations.AudienceVariant);
 export const blockHtml = defineElement(elementDeclarations.BlockHtml);
 export const blockJsx = defineElement(elementDeclarations.BlockJsx);
 export const button = defineElement(elementDeclarations.Button);
@@ -116,6 +102,15 @@ export const paragraph = defineElement(elementDeclarations.Paragraph);
 export const plitziSdk = defineElement(elementDeclarations.PlitziSdk);
 export const reference = defineElement(elementDeclarations.Reference);
 export const richText = defineElement(elementDeclarations.RichText);
+/**
+ * Variants: each visitor sees one of its variants. By chance (an A/B test) — `variants({ children: [variantItem({ weight: 90, children: [a]
+ * }), variantItem({ weight: 10, children: [b] })] })`, drawn by the shares and kept when they come back, named after the
+ * element until it says `experiment`. By rules — `variants({ chooseBy: 'rules', children: [variantItem({ when: { combinator:
+ * 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] }, children: [phones] }),
+ * variantItem([everyone])] })` — the first whose rule they match; one with no `when` is for everybody else.
+ */
+export const variants = defineElement(elementDeclarations.Variants);
+export const variantItem = defineElement(elementDeclarations.VariantItem);
 export const svg = defineElement(elementDeclarations.Svg);
 export const tabContainer = defineElement(elementDeclarations.TabContainer);
 export const tabContainerBody = defineElement(elementDeclarations.TabContainerBody);

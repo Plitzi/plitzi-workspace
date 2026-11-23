@@ -23,10 +23,10 @@ const state = (): Partial<CommonState> => ({
   schema: {
     ...EMPTY_SCHEMA.schema,
     flat: {
-      hero: node('hero', 'abTest', { experiment: 'heroTest' }, ['heroA', 'heroB', 'heroC']),
-      heroA: node('heroA', 'abTestVariant', { weight: 50 }),
-      heroB: node('heroB', 'abTestVariant', { weight: 30 }),
-      heroC: node('heroC', 'abTestVariant', { weight: 20 })
+      hero: node('hero', 'variants', { experiment: 'heroTest' }, ['heroA', 'heroB', 'heroC']),
+      heroA: node('heroA', 'variantItem', { weight: 50 }),
+      heroB: node('heroB', 'variantItem', { weight: 30 }),
+      heroC: node('heroC', 'variantItem', { weight: 20 })
     }
   },
   experiments: { assigned: { heroTest: 'b' } }

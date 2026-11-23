@@ -27,7 +27,14 @@ const rule = (field: string, value: string | boolean) => ({
 const variant = (id: string, when: unknown): Element => ({
   id,
   attributes: { when },
-  definition: { rootId: id, label: 'Audience variant', type: 'audienceVariant', styleSelectors: { base: '' } }
+  definition: { rootId: id, label: 'Variant', type: 'variantItem', styleSelectors: { base: '' } }
+});
+
+/** A `variants` element over the variants named, chosen as it says. */
+const variants = (id: string, chooseBy: 'chance' | 'rules', items: string[]): Element => ({
+  id,
+  attributes: { chooseBy },
+  definition: { rootId: id, label: 'Variants', type: 'variants', styleSelectors: { base: '' }, items }
 });
 
 describe('a visitor’s facts', () => {
@@ -82,14 +89,20 @@ describe('an audience', () => {
     expect(chooseAudienceVariant(rules.slice(0, 2), scope('desktop'))).toBe(-1);
   });
 
-  it('keeps a space’s pages apart only by the facts its audiences read', () => {
-    const flat = {
-      a: variant('a', { combinator: 'or', rules: [rule('visitor.language', 'es'), rule('visitor.device', 'mobile')] }),
-      b: variant('b', rule('user.authenticated', true))
-    };
+  it('keeps a space’s pages apart only by the facts its variants chosen by rules read', () => {
+    const a = variant('a', {
+      combinator: 'or',
+      rules: [rule('visitor.language', 'es'), rule('visitor.device', 'mobile')]
+    });
+    const b = variant('b', rule('user.authenticated', true));
 
-    expect(audienceFactsUsed({ flat })).toEqual(['language', 'device']);
-    expect(audienceFactsUsed({ flat: { b: flat.b } })).toEqual([]);
+    expect(audienceFactsUsed({ flat: { a, b, welcome: variants('welcome', 'rules', ['a', 'b']) } })).toEqual([
+      'language',
+      'device'
+    ]);
+    expect(audienceFactsUsed({ flat: { b, welcome: variants('welcome', 'rules', ['b']) } })).toEqual([]);
+    // Chosen by chance, its variants' rules decide nothing: the pages are not kept apart by them.
+    expect(audienceFactsUsed({ flat: { a, b, welcome: variants('welcome', 'chance', ['a', 'b']) } })).toEqual([]);
     expect(audienceKeyOf({ returning: true, language: 'es', device: 'mobile' }, ['language', 'device'])).toBe(
       'language=es;device=mobile'
     );

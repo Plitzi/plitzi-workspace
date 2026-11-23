@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { suggestSpace } from './index';
 import {
-  abTest,
-  abTestVariant,
   apiContainer,
   button,
   component,
@@ -13,6 +11,8 @@ import {
   heading,
   link,
   list,
+  variantItem,
+  variants,
   text
 } from '../../elements';
 import { onClick } from '../../elements/steps';
@@ -206,10 +206,10 @@ describe('suggestions', () => {
 
     expect(codesOf(unlike)).not.toContain('repeated-shape');
   });
-  // A demo's pricing test was told to make its variants one list: an A/B test takes nothing but its variants.
-  it('does not take the parts of the element they sit in — an A/B test’s variants — for rows of one list', () => {
+  // A demo's pricing test was told to make its variants one list: a Variants element takes nothing but its variants.
+  it('does not take the parts of the element they sit in — a Variants element’s — for rows of one list', () => {
     const plans = (name: string) =>
-      abTestVariant({
+      variantItem({
         children: [
           heading({ content: name, class: 'tile-label' }),
           text({ content: '$18', class: 'tile-value' }),
@@ -218,15 +218,15 @@ describe('suggestions', () => {
         ]
       });
     const spec = space([
-      page('home', [abTest({ experiment: 'pricing', children: [plans('One'), plans('Two'), plans('Three')] })])
+      page('home', [variants({ experiment: 'pricing', children: [plans('One'), plans('Two'), plans('Three')] })])
     ]);
     const shapes = (options: Parameters<typeof authorSpace>[1]) =>
       authorSpace(spec, options).suggestions.filter(suggestion => suggestion.code === 'repeated-shape');
 
     expect(shapes({})).not.toEqual([]);
-    expect(shapes({ ancestorTypes: { abTestVariant: 'abTest' } })).toEqual([]);
+    expect(shapes({ ancestorTypes: { variantItem: 'variants' } })).toEqual([]);
   });
-  it('does not take one thing written in each variant of an A/B test for one component: they are its versions', () => {
+  it('does not take one thing written in each variant of a Variants element for one component: they are its versions', () => {
     const tile = (name: string) =>
       container({
         class: 'tile',
@@ -242,9 +242,9 @@ describe('suggestions', () => {
       });
     const inVariants = space([
       page('home', [
-        abTest({
+        variants({
           experiment: 'pricing',
-          children: [abTestVariant({ children: [tile('One')] }), abTestVariant({ children: [tile('Two')] })]
+          children: [variantItem({ children: [tile('One')] }), variantItem({ children: [tile('Two')] })]
         })
       ])
     ]);
@@ -253,7 +253,7 @@ describe('suggestions', () => {
       page('home', [container({ children: [tile('One')] }), container({ children: [tile('Two')] })])
     ]);
     const shapes = (spec: SpaceSpec) =>
-      authorSpace(spec, { ancestorTypes: { abTestVariant: 'abTest' } }).suggestions.filter(
+      authorSpace(spec, { ancestorTypes: { variantItem: 'variants' } }).suggestions.filter(
         suggestion => suggestion.code === 'repeated-shape'
       );
 

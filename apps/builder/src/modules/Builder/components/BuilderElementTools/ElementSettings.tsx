@@ -1,4 +1,3 @@
-import Heading from '@plitzi/plitzi-ui/components/Heading';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
@@ -81,15 +80,20 @@ const ElementSettings = ({
       ? attributes.referenceId
       : undefined;
 
+  const elementName = Plugin?.content.definition.label ?? type;
+
   const children = useMemo(
     () => (
       <PlitziProvider value={plitziContextValue}>
         <ErrorBoundary>
           {Settings && (
             <div className={clsx('flex h-full flex-col', { dark: resolvedTheme === 'dark' })}>
-              <Heading as="h5" className="m-0">
-                Settings
-              </Heading>
+              {/* The tab says Settings already: what starts here is the element's own, said by its name. */}
+              <div className="border-ui-line mt-1 mb-1 border-t pt-3">
+                <span className="text-ui-fg-subtle text-[11px] font-semibold tracking-wide uppercase">
+                  {elementName}
+                </span>
+              </div>
               <Settings {...attributes} id={id} runtime={runtime} variables={variables} onUpdate={handleChange} />
               {componentId && <InstanceTools instanceId={id} componentId={componentId} />}
             </div>
@@ -98,7 +102,18 @@ const ElementSettings = ({
         </ErrorBoundary>
       </PlitziProvider>
     ),
-    [plitziContextValue, Settings, resolvedTheme, attributes, id, runtime, variables, handleChange, componentId]
+    [
+      plitziContextValue,
+      Settings,
+      resolvedTheme,
+      elementName,
+      attributes,
+      id,
+      runtime,
+      variables,
+      handleChange,
+      componentId
+    ]
   );
 
   if (Plugin && pluginSettingsStyles?.[type] && pluginSettingsStyles[type].length > 0) {

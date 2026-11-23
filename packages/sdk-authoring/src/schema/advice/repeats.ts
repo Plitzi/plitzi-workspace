@@ -307,7 +307,7 @@ export const suggestRepeats = (
   };
 
   /**
-   * The part an element is, or sits in, of the element above it — an `abTestVariant` of its `abTest` — when it is
+   * The part an element is, or sits in, of the element above it — a `variant` of its `variants` — when it is
    * in one: the version of its place it belongs to.
    */
   const versionOf = (id: string): string | undefined => {
@@ -412,7 +412,7 @@ export const suggestRepeats = (
 
     const parents = new Set(fresh.map(id => flat[id].definition.parentId));
     const siblings = parents.size === 1;
-    // Versions of one place — an A/B test's variants, or what each of them holds: what an author edits variant by
+    // Versions of one place — a Variants element's variants, or what each of them holds: what an author edits variant by
     // variant on the canvas, never rows of data (the test takes nothing but its variants) nor one component.
     if (versionsOfOnePlace(fresh)) {
       continue;

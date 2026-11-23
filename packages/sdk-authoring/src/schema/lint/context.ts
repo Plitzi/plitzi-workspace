@@ -75,7 +75,7 @@ export class LintContext {
   readonly computed: readonly string[];
   /** The feature flags the space declares, by name. */
   readonly flags: readonly string[];
-  /** The experiments the space's A/B tests run, by name — on its pages and in its components. */
+  /** The experiments the space's Variants elements chosen by chance run, by name — on its pages and in its components. */
   readonly experiments: readonly string[];
 
   constructor(

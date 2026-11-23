@@ -1,7 +1,7 @@
 import { GLOBAL_SOURCE_FIELDS } from '@plitzi/sdk-shared/dataSource';
 import { templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
-import { reportUnknownExperiment } from './experiments';
+import { reportUnknownExperiment } from './variantsElements';
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';

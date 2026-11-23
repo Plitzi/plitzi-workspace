@@ -4,10 +4,10 @@ import { audienceKeyFor, requestVisitorFacts, spaceAudiences } from './audiences
 
 import type { Element } from '@plitzi/sdk-shared';
 
-const node = (id: string, type: string, attributes: Record<string, unknown> = {}): Element => ({
+const node = (id: string, type: string, attributes: Record<string, unknown> = {}, items?: string[]): Element => ({
   id,
   attributes,
-  definition: { rootId: id, label: type, type, styleSelectors: { base: '' } }
+  definition: { rootId: id, label: type, type, styleSelectors: { base: '' }, ...(items ? { items } : {}) }
 });
 
 const byDevice = { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] };
@@ -20,11 +20,17 @@ const request = (userAgent: string, acceptLanguage = 'es-AR,es;q=0.9') => ({
 
 describe('audiences on the server', () => {
   const space = {
-    flat: { welcome: node('welcome', 'audience'), phones: node('phones', 'audienceVariant', { when: byDevice }) }
+    flat: {
+      welcome: node('welcome', 'variants', { chooseBy: 'rules' }, ['phones']),
+      phones: node('phones', 'variantItem', { when: byDevice })
+    }
   };
 
-  it('says whether a space has audiences, and the visitor facts their rules read', () => {
+  it('says whether a space has Variants elements chosen by rules, and the visitor facts their rules read', () => {
     expect(spaceAudiences(space)).toEqual({ has: true, used: ['device'] });
+    // Chosen by chance, the same variants decide by no rule.
+    const byChance = { flat: { ...space.flat, welcome: node('welcome', 'variants', {}, ['phones']) } };
+    expect(spaceAudiences(byChance)).toEqual({ has: false, used: [] });
     expect(spaceAudiences({ flat: { text: node('text', 'text') } })).toEqual({ has: false, used: [] });
   });
 

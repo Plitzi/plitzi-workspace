@@ -1,13 +1,11 @@
 import { lintAccessibility } from './accessibility';
 import { lintActionOutputBindings } from './actionOutput';
 import { lintAnchors } from './anchors';
-import { lintAudiences } from './audiences';
 import { lintChannels } from './channels';
 import { lintInstances } from './components';
 import { LintContext } from './context';
 import { lintDataPaths } from './dataPaths';
 import { lintElements } from './elements';
-import { lintExperiments } from './experiments';
 import { lintFlags } from './flags';
 import { lintFlows } from './flows';
 import { lintKeptState } from './keptState';
@@ -20,6 +18,7 @@ import { lintStyle } from './style';
 import { lintComputed } from './templates';
 import { lintTests } from './tests';
 import { lintTimeWindows } from './timeWindows';
+import { lintVariantsElements } from './variantsElements';
 
 import type { LintCatalogs, LintIssue } from './context';
 import type { Schema, Style } from '@plitzi/sdk-shared';
@@ -55,8 +54,7 @@ export const lintSpace = (
   lintComputed(ctx);
   lintKeptState(ctx);
   lintFlags(ctx);
-  lintExperiments(ctx);
-  lintAudiences(ctx);
+  lintVariantsElements(ctx);
   lintTimeWindows(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);

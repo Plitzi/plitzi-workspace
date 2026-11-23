@@ -2,15 +2,10 @@ import { evaluateRuleGroup } from '../conditions';
 import { hasConditions } from '../flags/resolveFlags';
 import { cookieFromHeader } from '../helpers/cookies';
 import { isRecord } from '../helpers/isRecord';
+import { chooseByOf, variantItemsOf, variantsElementsOf } from '../variants/variants';
 
 import type { FlagScope } from '../flags/resolveFlags';
 import type { Element, Schema } from '../types';
-
-/** The element that shows each visitor the first of its variants whose rule they match. */
-export const AUDIENCE_TYPE = 'audience';
-
-/** Its parts, in order: each with the rule (`when`) of the visitors it is for. */
-export const AUDIENCE_VARIANT_TYPE = 'audienceVariant';
 
 export type VisitorDevice = 'mobile' | 'tablet' | 'desktop';
 
@@ -125,21 +120,21 @@ const factsReadBy = (when: unknown, read: Set<VisitorFact>): void => {
   }
 };
 
-/** Every audience variant of a space, on its pages and in its components. */
-const audienceVariantsOf = (schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'components'>>): Element[] =>
-  [schema.flat, ...Object.values(schema.components ?? {}).map(component => component.flat)].flatMap(flat =>
-    Object.values(flat).filter(element => element.definition.type === AUDIENCE_VARIANT_TYPE)
-  );
+/** Every variant a space chooses by rules — of each `variants` element chosen by rules, on its pages and components. */
+const ruledVariantsOf = (schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'components'>>): Element[] =>
+  variantsElementsOf(schema)
+    .filter(({ element }) => chooseByOf(element.attributes) === 'rules')
+    .flatMap(({ element, flat }) => variantItemsOf(element, flat));
 
 /**
- * The visitor facts a space's audiences decide on, in order: what a page of it is drawn by besides the address and the
+ * The visitor facts a space's variants chosen by rules decide on, in order: what a page of it is drawn by besides the address and the
  * session — so what its pages are kept apart by. Empty for a space with no audience, or none reading a fact.
  */
 export const audienceFactsUsed = (
   schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'components'>>
 ): VisitorFact[] => {
   const read = new Set<VisitorFact>();
-  for (const variant of audienceVariantsOf(schema)) {
+  for (const variant of ruledVariantsOf(schema)) {
     factsReadBy(variant.attributes.when, read);
   }
 

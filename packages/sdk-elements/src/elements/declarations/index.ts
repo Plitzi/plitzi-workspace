@@ -50,17 +50,11 @@ import TabContainerBodyDeclaration from '../structure/TabContainer/TabContainerB
 import TabContainerHeaderDeclaration from '../structure/TabContainer/TabContainerHeader/declaration';
 import TabContainerItemDeclaration from '../structure/TabContainer/TabContainerItem/declaration';
 import TimeWindowDeclaration from '../structure/TimeWindow/declaration';
-import AbTestVariantDeclaration from '../testing/AbTest/AbTestVariant/declaration';
-import AbTestDeclaration from '../testing/AbTest/declaration';
-import AudienceVariantDeclaration from '../testing/Audience/AudienceVariant/declaration';
-import AudienceDeclaration from '../testing/Audience/declaration';
+import VariantsDeclaration from '../testing/Variants/declaration';
+import VariantItemDeclaration from '../testing/Variants/VariantItem/declaration';
 
 export const elementDeclarations = {
-  AbTest: AbTestDeclaration,
-  AbTestVariant: AbTestVariantDeclaration,
   ApiContainer: ApiContainerDeclaration,
-  Audience: AudienceDeclaration,
-  AudienceVariant: AudienceVariantDeclaration,
   BlockHtml: BlockHtmlDeclaration,
   BlockJsx: BlockJsxDeclaration,
   Button: ButtonDeclaration,
@@ -103,17 +97,15 @@ export const elementDeclarations = {
   Text: TextDeclaration,
   ThemeToggle: ThemeToggleDeclaration,
   TimeWindow: TimeWindowDeclaration,
+  Variants: VariantsDeclaration,
+  VariantItem: VariantItemDeclaration,
   Video: VideoDeclaration
 } as const;
 
 export type ElementDeclarationName = keyof typeof elementDeclarations;
 
 export {
-  AbTestDeclaration,
-  AbTestVariantDeclaration,
   ApiContainerDeclaration,
-  AudienceDeclaration,
-  AudienceVariantDeclaration,
   BlockHtmlDeclaration,
   BlockJsxDeclaration,
   ButtonDeclaration,
@@ -156,6 +148,8 @@ export {
   TextDeclaration,
   ThemeToggleDeclaration,
   TimeWindowDeclaration,
+  VariantsDeclaration,
+  VariantItemDeclaration,
   VideoDeclaration
 };
 

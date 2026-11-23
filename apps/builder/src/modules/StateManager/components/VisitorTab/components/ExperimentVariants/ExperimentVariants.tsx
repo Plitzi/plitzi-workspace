@@ -30,7 +30,7 @@ const ExperimentRow = ({ name, weights, forced, onForce }: ExperimentRowProps) =
 
   return (
     <Select label={name} value={forced[name] ?? OWN} onChange={handleChange} size="xs">
-      <option value={OWN}>As each test’s settings show it</option>
+      <option value={OWN}>As its settings show it</option>
       {weights.map((weight, index) => {
         const variant = variantAt(index);
 
@@ -62,7 +62,9 @@ const ExperimentVariants = () => {
 
   return (
     <section className="border-ui-line flex flex-col gap-2 border-t pt-2">
-      <h6 className="text-ui-fg-subtle px-1 text-[10px] font-semibold tracking-wider uppercase">A/B tests</h6>
+      <h6 className="text-ui-fg-subtle px-1 text-[10px] font-semibold tracking-wider uppercase">
+        For variants by chance
+      </h6>
       {names.map(name => (
         <ExperimentRow key={name} name={name} weights={declared[name].weights} forced={forced} onForce={setForced} />
       ))}

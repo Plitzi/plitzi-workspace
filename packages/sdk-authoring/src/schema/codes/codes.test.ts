@@ -2,12 +2,10 @@ import { describe, expect, test } from 'vitest';
 
 import { ACCESSIBILITY_CODES } from './accessibility';
 import { ANCHOR_CODES } from './anchors';
-import { AUDIENCE_CODES } from './audiences';
 import { BINDING_CODES } from './bindings';
 import { COMPONENT_CODES } from './components';
 import { CSS_CODES } from './css';
 import { ELEMENT_CODES } from './elements';
-import { EXPERIMENT_CODES } from './experiments';
 import { FLAG_CODES } from './flags';
 import { FLOW_CODES } from './flows';
 import { AUTHORING_CODES } from './index';
@@ -18,6 +16,7 @@ import { SPACE_CODES } from './space';
 import { SUGGESTION_CODES } from './suggestions';
 import { TEST_CODES } from './tests';
 import { TIME_WINDOW_CODES } from './timeWindows';
+import { VARIANTS_CODES } from './variantsElements';
 
 const SUBJECTS = {
   SPACE_CODES,
@@ -29,8 +28,7 @@ const SUBJECTS = {
   BINDING_CODES,
   COMPONENT_CODES,
   FLAG_CODES,
-  EXPERIMENT_CODES,
-  AUDIENCE_CODES,
+  VARIANTS_CODES,
   TIME_WINDOW_CODES,
   FLOW_CODES,
   SERVER_CODES,

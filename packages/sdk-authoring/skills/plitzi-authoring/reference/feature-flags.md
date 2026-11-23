@@ -84,53 +84,50 @@ and a self-hosted server keeps the last ones it fetched — so a published site 
 Remove the gate from what stays, delete what it replaced, and remove the flag. A declared flag nothing reads is a
 warning (`flag-unused`): it is a switch nobody can see the effect of.
 
-## A/B tests
+## Variants: A/B tests and audiences
 
-A flag shows the same side to everyone its rules match; an `abTest` splits the visitors at random and keeps each on
-their variant. It holds two to five `abTestVariant`s — A first, then B… — and draws only the one a visitor is shown:
+A flag shows the same side to everyone its rules match; `variants` shows each visitor one of its `variantItem`s, chosen
+**by chance** (an A/B test, the default) or **by rules** (who the visitor is). Only the variant shown is drawn.
 
 ```ts
-abTest({
-  experiment: 'heroTest', // what a visitor's variant is kept under, and read as {{ experiments.heroTest }}
-  builderVariant: 'b',    // the variant the builder's canvas shows; visitors never see it decided this way
+variants({
   children: [
-    abTestVariant({ weight: 70, children: [heading({ content: 'Build faster' })] }), // A: 70% of the visitors
-    abTestVariant({ weight: 30, children: [heading({ content: 'Ship today' })] })    // B: 30%
+    variantItem({ weight: 90, children: [heading({ content: 'Build faster' })] }), // A: 90% of the visitors
+    variantItem({ weight: 10, children: [heading({ content: 'Ship today' })] })    // B: 10%
   ]
 });
 ```
 
-A variant's `weight` (0–100, default 50) is its share against the others'. The server draws the visitor's variant and
-keeps it in a cookie, so a reload or a later visit shows the same; a visitor keeps theirs when the weights change. A
-variant at 0 is shown to nobody, and its visitors are drawn again; one left with a weight ends the experiment —
-everybody sees it. Two tests with the same `experiment` show a visitor the same variant (`experiment-weights-differ`
-warns when their weights disagree). Count a conversion with the `reachGoal('signup')` step: Plitzi's analytics shows
-each variant's visitors, conversions and rate against A's. `{{ experiments.heroTest }}` is `'a'`, `'b'`… for anything
-else a flow reports. An `abTest` with no `experiment` runs nothing and shows A
-(`experiment-unnamed`). To see a variant you were not drawn, where debugging is authorized: the dev tools' **Experiments**
-tab, or `?ab=heroTest:b` in the address — kept for the visit, never as your variant.
+**By chance**, it holds two to five variants — A first, then B… A `weight` (0–100, default 50) is a share against the
+others'. The server draws the visitor's variant and keeps it in a cookie, so a reload or a later visit shows the same,
+and a visitor keeps theirs when the shares change; 0 shows a variant to nobody, one left with a share ends the test. Its
+`experiment` names the test — left empty, the element's id does (`pricing-test` runs `pricing_test`) — and two with the
+same name show a visitor the same variant (`experiment-weights-differ` warns when their shares disagree). Count a
+conversion with the `reachGoal('signup')` step: Plitzi's analytics shows each variant's visitors, conversions and rate
+against A's. `{{ experiments.<name> }}` is `'a'`, `'b'`… for a flow. To see a variant you were not drawn, where debugging
+is authorized: the dev tools' **Experiments** tab, or `?ab=heroTest:b` in the address.
 
-## Audiences
-
-An `audience` shows each visitor the first of its `audienceVariant`s whose `when` they match — a rule group over what a
+**By rules** — `chooseBy: 'rules'` — it shows the first variant whose `when` the visitor matches: a rule group over what a
 flag's rules see, `queryParams.utm_source` included, and the visitor: `visitor.returning`, `visitor.language` (`es`),
 `visitor.device` (`mobile`, `tablet`, `desktop`). End it with a variant with no `when`, for everybody else
-(`audience-no-fallback` warns otherwise):
+(`variants-no-fallback` warns otherwise):
 
 ```ts
-audience({
+variants({
+  chooseBy: 'rules',
   children: [
-    audienceVariant({
+    variantItem({
       when: { combinator: 'and', rules: [{ field: 'visitor.device', operator: '=', value: 'mobile' }] },
       children: [text({ content: 'Get the app' })]
     }),
-    audienceVariant([text({ content: 'Welcome' })])
+    variantItem([text({ content: 'Welcome' })])
   ]
 });
 ```
 
-In the builder, a test and an audience show the variant their settings name while editing; the preview shows the page to
-the visitor chosen in the State Manager's **Visitor** tab — its device, language, returning, and each A/B variant.
+A variant keeps its `weight` and its `when` whichever way it chooses, so switching loses neither. In the builder its
+settings list the variants with their share or their rule; the canvas shows the one picked there (`builderVariant`, its
+place from 0) while editing, and the preview the visitor chosen in the State Manager's **Visitor** tab.
 
 ## Showing something for a while
 

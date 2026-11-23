@@ -140,10 +140,8 @@ const STYLESHEET: Record<string, SlotRules> = {
   }),
   dropdownPopup: root('.plitzi-component__dropdown-popup'),
   embed: root('.plitzi-component__embed'),
-  abTest: root('.plitzi-component__ab-test'),
-  abTestVariant: root('.plitzi-component__ab-test-variant'),
-  audience: root('.plitzi-component__audience'),
-  audienceVariant: root('.plitzi-component__audience-variant'),
+  variants: root('.plitzi-component__variants'),
+  variantItem: root('.plitzi-component__variant-item'),
   timeWindow: root('.plitzi-component__time-window'),
   focusGroup: root('.plitzi-component__focus-group'),
   fontAwesome: () => ({

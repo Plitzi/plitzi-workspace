@@ -2,22 +2,24 @@
 '@plitzi/cli': patch
 ---
 
-A/B tests: an element that shows each visitor one of two variants, and keeps it; a run's single-flight key never
+A/B tests and audiences: an element that shows each visitor one of its variants, by chance or by rules; a run's single-flight key never
 outlives its lifetime; a queue's jobs set aside are resumed at once.
 
 ## Elements
 
-- **A/B tests.** `abTest` — in the builder's new **Testing** category — holds two to five `abTestVariant`s, A first,
-  and draws the one a visitor is shown, drawn by the variants' `weight`s (0–100 each, against the others'). Its
-  `experiment` names it: the visitor's variant is kept under it in a cookie (`plitzi_ab`), so a reload or a later visit
-  shows the same, and a visitor keeps theirs when the weights change. A variant at 0 is shown to nobody (its visitors
-  are drawn again); one left with a weight ends the experiment for everybody. Two tests with one name share it.
-  The page server draws the side and sends the cookie with the page; the browser hydrates with what it drew and draws
-  only what no server did (a space with no server, a static copy). The builder's canvas shows the side the test's
-  settings name (`builderVariant`). `{{ experiments.<name> }}` — a new global source — reads `'a'`, `'b'`…, for a
-  flow to report with what it measures. Authoring writes `abTest()` / `abTestVariant()`, and the linter says
-  `experiment-unnamed`, `experiment-name`, `experiment-weight`, `experiment-weights-differ`,
-  `experiment-builder-variant`, `experiment-variants` and `experiment-unknown`.
+- **Variants: A/B tests and audiences in one element.** `variants` — in the builder's new **Testing** category — shows each
+  visitor one of its `variantItem`s, chosen **by chance** (`chooseBy: 'chance'`, the default) or **by rules**
+  (`'rules'`). By chance it holds two to five variants, A first, drawn by their `weight`s (0–100 each, against the
+  others'); its `experiment` names the test — left empty, the element's id does, so a test runs as soon as it is
+  placed — and the visitor's variant is kept under it in a cookie (`plitzi_ab`), so a reload or a later visit shows the
+  same and a visitor keeps theirs when the shares change. A variant at 0 is shown to nobody; one left with a share ends
+  the test for everybody; two with one name share it. `{{ experiments.<name> }}` — a new global source — reads
+  `'a'`, `'b'`… The page server draws the variant and sends the cookie with the page; the browser hydrates with what it
+  drew and draws only what no server did. Each variant keeps its share and its rule whichever way it chooses, so
+  switching loses neither. Its settings list the variants — with each share and the percent it makes, or each rule in
+  words — the one the canvas shows (`builderVariant`, a place from 0), and add, select and remove one. Authoring writes
+  `variants()` / `variantItem()`; the linter says `variants-choose-by`, `variants-items`, `variants-builder-variant`,
+  `experiment-name`, `experiment-weight`, `experiment-weights-differ` and `experiment-unknown`.
 - **A tester forces a variant** where debugging is authorized: the dev tools' new **Experiments** tab, or
   `?ab=heroTest:b` in the address, kept for the visit in a session cookie of its own (`plitzi_ab_qa`) — shown over the
   visitor's variant, never kept as theirs. The server draws it (`forcedExperiments`), never keeps that page, and a
@@ -27,13 +29,11 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   the percent keeps everyone who was in. The page server, the browser (the `flags` source and the router), the server
   data and a server action all resolve with the same places; the builder's Feature Flags panel, `upsertFlag` and
   authoring write it, and `flag-rollout` refuses a malformed one.
-- **Audiences.** `audience` — in the Testing category — shows each visitor the first of its `audienceVariant`s whose
-  rule (`when`) they match: what a flag's rules see, `utm_*` query parameters included, and the visitor's facts —
-  `visitor.returning`, `visitor.language`, `visitor.device`. A variant with no rule is for everybody else. The page
-  server reads the facts off the request and the browser hydrates with them; a page an audience drew is cached apart by
-  the facts its rules read, only for a space whose audiences read any. Authoring writes `audience()` /
-  `audienceVariant()`; the linter says `audience-variants`, `audience-rule`, `audience-unreachable` and
-  `audience-no-fallback`.
+- **Audiences.** A Variants element by rules shows each visitor the first variant whose rule (`when`) they match: what a flag's
+  rules see, `utm_*` query parameters included, and the visitor's facts — `visitor.returning`, `visitor.language`,
+  `visitor.device`. A variant with no rule is for everybody else. The page server reads the facts off the request and
+  the browser hydrates with them; a page it drew is cached apart by the facts its rules read, only for a space whose
+  Variants elements read any. The linter says `variants-rule`, `variants-unreachable` and `variants-no-fallback`.
 - **Time windows.** `timeWindow` shows what it holds only between `startsAt` and `endsAt` (ISO 8601 with the offset;
   either empty is no bound): drawn by the server at the instant it renders, which the browser hydrates at, then shown or
   hidden when the window opens or closes. Authoring writes `timeWindow()`; the linter says `time-window-bound` and
@@ -42,19 +42,22 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   is drawn (the server says what it drew, `drawnExperiments`); the new `reachGoal` step (`reachGoal('signup')` in
   authoring) reports a conversion, `$goal`, with the visitor's variants. `exposureOf` and `goalOf` read them; in the
   builder the step says what a visitor's page would count.
-- **Trying them in the builder.** While editing, an A/B test and an audience show the variant their settings name; the
-  canvas's preview shows the page to the visitor chosen in the State Manager's Visitor tab — the device (by default as
-  the canvas is sized), the language, returning or not, the variant of each A/B test and the date time windows are read at.
-- **An A/B test's variants are never offered as a list or a component.** `repeated-shape` took the variants of a
-  test (and what each holds alike) for rows of data — a list an A/B test cannot hold — or for one component: they are
+- **Trying them in the builder.** While editing, a Variants element shows the variant its settings pick; the canvas's preview
+  shows the page to the visitor chosen in the State Manager's Visitor tab — the device (by default as the canvas is
+  sized), the language, returning or not, the variant of each Variants element by chance and the date time windows are read at.
+- **Variants are never offered as a list or a component.** `repeated-shape` took the variants of a
+  Variants element (and what each holds alike) for rows of data — a list it cannot hold — or for one component: they are
   versions of one place, edited variant by variant. `suggestSpace` knows the built-in parts as `authorSpace` does.
-- **A closed time window, and an audience with no variant for the visitor, take no room.** They kept an empty box,
+- **A closed time window, and a Variants element with no variant for the visitor, take no room.** They kept an empty box,
   which a column's gap spaced the content around: now hidden as a hidden element is, their node kept to open in place.
 - **The builder goes back to the space it was opened for.** Its menu's **Back to the space** opens the space's console
   (`/spaces/<its address name>`), not the list of every space; **Domains and targets** names it the same way.
+- **Element settings say what they are.** The Settings tab's duplicate "Settings" heading is now the element's name
+  over its own fields, and the flag gate every element has reads "Feature flag (optional) — None, not tied to a flag"
+  rather than "Always rendered", which read as a flag in use.
 - **The builder's catalogue says which element is a part of another.** An element that only works inside another
-  (`ancestorType`: an A/B test's variant, an audience's, a carousel's track) is listed right after it, its icon drawn
-  as a piece and "in A/B Test" under its name. A plugin says it the same way — `ancestorType` in its declaration,
+  (`ancestorType`: a Variants element's variant, a carousel's track) is listed right after it, its icon drawn as a piece and "in
+  Variants" under its name. A plugin says it the same way — `ancestorType` in its declaration,
   carried by `plitzi plugin pack` into its manifest. Every control the builder draws shows the pointer.
 - **A page server's HTML cache is keyed by the visitor's variants**, and a page that drew a visitor theirs is never
   kept: the next visitor with none is drawn their own.

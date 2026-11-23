@@ -67,7 +67,7 @@ export const suggestSpace = (
      * declaration it has — a `custom` element naming one placed it by name.
      */
     pluginTypes?: readonly string[];
-    /** The types that only work inside another, and that type (`elementAncestorTypes`): an A/B test's variants. */
+    /** The types that only work inside another, and that type (`elementAncestorTypes`): a Variants element's variants. */
     ancestorTypes?: Readonly<Record<string, string>>;
   } = {}
 ): Suggestion[] =>

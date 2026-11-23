@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { assignExperiments, builderExperiments, declaredExperiments } from './experiments';
+import { assignExperiments, builderExperiments, declaredExperiments, experimentNameOf } from './experiments';
 import {
   experimentsCookie,
   experimentsCookieName,
@@ -23,34 +23,34 @@ const element = (
   definition: { rootId: id, label: type, type, styleSelectors: { base: '' }, items }
 });
 
-/** An A/B test and its variants, each with the weight given (`undefined`: none written). */
+/** A `variants` element and its variants, each with the weight given (`undefined`: none written). */
 const test = (id: string, attributes: Record<string, unknown>, weights: (number | string | undefined)[]) => {
   const flat: Record<string, Element> = {};
   const ids = weights.map((weight, index) => {
     const variantId = `${id}-${String(index)}`;
-    flat[variantId] = element(variantId, 'abTestVariant', weight === undefined ? {} : { weight });
+    flat[variantId] = element(variantId, 'variantItem', weight === undefined ? {} : { weight });
 
     return variantId;
   });
-  flat[id] = element(id, 'abTest', attributes, ids);
+  flat[id] = element(id, 'variants', attributes, ids);
 
   return flat;
 };
 
 describe('the experiments a space runs', () => {
-  it('are its abTest elements by name, on its pages and in its components, the first naming one giving the weights', () => {
+  it('are its variants chosen by chance, by name, on its pages and in its components, the first naming one giving the weights', () => {
     const flat = {
-      ...test('hero', { experiment: 'heroTest', builderVariant: 'b' }, [70, 30]),
+      ...test('hero', { experiment: 'heroTest', builderVariant: 1 }, [70, 30]),
       ...test('again', { experiment: 'heroTest' }, [10, 90]),
-      ...test('unnamed', { experiment: '' }, [50, 50]),
       ...test('badName', { experiment: 'hero test' }, [50, 50]),
+      ...test('welcome', { chooseBy: 'rules' }, [50, 50]),
       plain: element('plain', 'container', { experiment: 'notOne' })
     };
     const components = {
       card: {
         id: 'card',
         rootId: 'price',
-        flat: test('price', { experiment: 'pricing', builderVariant: 'e' }, [undefined, 'many', 20])
+        flat: test('price', { experiment: 'pricing', builderVariant: 4 }, [undefined, 'many', 20])
       }
     };
 
@@ -59,6 +59,14 @@ describe('the experiments a space runs', () => {
       // An unreadable weight is the default, and the canvas cannot show a variant the test does not have.
       pricing: { weights: [50, 50, 20], builderVariant: 'a' }
     });
+  });
+
+  it('runs one not named yet under its own name, made a name, so it splits its visitors as soon as it is placed', () => {
+    expect(declaredExperiments({ flat: test('pricing-test', { experiment: '' }, [90, 10]) })).toEqual({
+      pricing_test: { weights: [90, 10], builderVariant: 'a' }
+    });
+    expect(experimentNameOf({ id: '3-way', attributes: {} })).toBe('_3_way');
+    expect(experimentNameOf({ id: 'hero', attributes: { experiment: 'hero test' } })).toBeUndefined();
   });
 });
 
