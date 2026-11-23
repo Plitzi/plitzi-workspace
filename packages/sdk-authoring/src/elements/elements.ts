@@ -42,6 +42,12 @@ export const channel = defineElement(elementDeclarations.Channel);
 export const container = defineElement(elementDeclarations.Container);
 export const custom = defineElement(elementDeclarations.Custom);
 export const dialogContainer = defineElement(elementDeclarations.DialogContainer);
+/**
+ * What a summary shows or hides — a question and its answer, a menu, "show more": `disclosure({ name: 'faq', children:
+ * [disclosureSummary([text({ content: 'Question?' })]), paragraph({ content: 'Answer.' })] })`. The summary comes first.
+ */
+export const disclosure = defineElement(elementDeclarations.Disclosure);
+export const disclosureSummary = defineElement(elementDeclarations.DisclosureSummary);
 export const dropdown = defineElement(elementDeclarations.Dropdown);
 export const dropdownPopup = defineElement(elementDeclarations.DropdownPopup);
 export const focusGroup = defineElement(elementDeclarations.FocusGroup);

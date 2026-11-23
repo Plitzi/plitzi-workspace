@@ -18,6 +18,7 @@ export const defaultElements = {
   focusGroup: elements.FocusGroup,
   layoutContainer: elements.LayoutContainer,
   dialogContainer: elements.DialogContainer,
+  disclosure: elements.Disclosure,
   modalContainer: elements.ModalContainer,
   tabContainer: elements.TabContainer,
   timeWindow: elements.TimeWindow,

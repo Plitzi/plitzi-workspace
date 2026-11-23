@@ -82,12 +82,15 @@ button({ content: 'Menu', bind: { ariaExpanded: 'state.menuOpen' }, flows: [[onC
 
 An "active" variant is for the eyes. `ariaPressed` and `ariaExpanded` are for everyone else. Use both. A button that
 opens a panel also names it — `controls: 'menu-panel'`, the panel's id (authoring gives the panel the anchor
-`aria-controls` needs; [recipes/accordion.ts](../recipes/accordion.ts)). In a list's row, both are the row's own: each
+`aria-controls` needs). In a list's row, both are the row's own: each
 row's panel is drawn as `<id>-<row>`, and the row's button points at its own. Words that change while somebody is on the page
 — a count, a total, a status — sit in `container({ live: 'polite', … })`, so a screen reader says them when they change.
-A part that opens and closes on its own — a question and its answer, many open at once — needs no state at all:
-`container({ subType: 'details', children: [container({ subType: 'summary', children: [text('Question')] }), …] })`
-(`open: true` to start open), the browser's own disclosure, announced as one. The accordion recipe is for one-at-a-time.
+A part that opens and closes — a question and its answer, a menu, "show more" — is a `disclosure`, and needs no state
+nor `ariaExpanded`: `disclosure({ children: [disclosureSummary([text({ content: 'Question' })]), …what it shows] })`.
+It is the browser's own `<details>`, announced as one; the summary is the control and its name (words in it, never a
+button), and lights the `expanded` state while open. One `name` for several makes them an accordion, one open at a time
+([recipes/accordion.ts](../recipes/accordion.ts)); Escape closes it, and so does a press outside with
+`closeOnClickOutside` (a menu).
 Results, a menu or a set of options someone goes through with the keyboard sit in `focusGroup({ label, children })`:
 ↑/↓ move between the controls inside, ←/→ to the first of the next or previous list, and ↓ from a search field inside
 goes down into them — Tab alone took a stop per result.

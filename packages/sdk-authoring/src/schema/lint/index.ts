@@ -5,6 +5,7 @@ import { lintChannels } from './channels';
 import { lintInstances } from './components';
 import { LintContext } from './context';
 import { lintDataPaths } from './dataPaths';
+import { lintDisclosures } from './disclosures';
 import { lintElements } from './elements';
 import { lintFlags } from './flags';
 import { lintFlows } from './flows';
@@ -56,6 +57,7 @@ export const lintSpace = (
   lintFlags(ctx);
   lintVariantsElements(ctx);
   lintTimeWindows(ctx);
+  lintDisclosures(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);
   lintDataPaths(ctx);

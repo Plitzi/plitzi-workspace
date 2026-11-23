@@ -70,6 +70,8 @@ The space is not written until these are fixed.
 | `css-property-unknown` | a CSS property that does not exist | the property it suggests; a custom property starts with `--` |
 | `css-value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
 | `declared-callback-target` | a `declaredCallback` target with a key beside `on` and `params` — read nowhere, so the step runs without it | the value in `params`: `{ on: 'calendar', params: { date } }` |
+| `disclosure-summary-control` | a button, a link or a field inside a `disclosureSummary` — the summary is the control: one inside it is a control within a control, which a keyboard and a screen reader cannot tell apart, and pressing it opens the disclosure too | words in the summary (a text, a heading); the button or the link in what the disclosure shows, or beside it |
+| `disclosure-summary-first` | a `disclosure` whose first child is not its `disclosureSummary` — the browser opens it by its first `<summary>` alone, and draws "Details" of its own otherwise | `disclosure({ children: [disclosureSummary([…]), …what it shows] })`: one summary, first |
 | `element-ids-target` | a step refreshing containers by id (`invalidateElements`, `invalidateQueries({ elements })`) naming one the space does not have, or one that is not an `apiContainer` | the id of the `apiContainer` whose data the step changes: `invalidateElements: ['posts']` |
 | `element-load-strategy` | a `loadStrategy` the element does not take | one of the values the message lists |
 | `element-rejected` | an element the schema refused to hold | the problem listed with it |
@@ -224,6 +226,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `control-without-name` | a button or a link with no words, or a field nothing names | `title` on the button, `label` on the link, `label` (with `hideLabel: true`) on the field |
 | `controls-no-anchor` | a button's `controls` naming no anchor — `aria-controls` points at nothing | an `anchor` on the element it shows and hides, and `controls` naming it |
 | `default-content-beside-children` | a button printing its default "Button" beside its children | `content: ''` |
+| `disclosure-summary-unnamed` | a `disclosureSummary` with nothing in it — a screen reader announces a control with no name | a text or a heading inside it: what opening it shows |
 | `dropdown-without-control` | a dropdown opened from a box or an icon — no keyboard opens it | a `button` as what opens it (`title` if it is only an icon) |
 | `embed-without-title` | an `embed` with no `title` — a frame a screen reader cannot describe | say what it shows in `title` |
 | `experiment-weights-differ` | two `variants` running the same test with different weights — they share it, so one set is ignored | the same weights on both, or a test name of its own for each |

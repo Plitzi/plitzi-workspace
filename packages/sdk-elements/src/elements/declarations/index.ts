@@ -40,6 +40,8 @@ import CarouselTrackDeclaration from '../structure/Carousel/CarouselTrack/declar
 import CarouselDeclaration from '../structure/Carousel/declaration';
 import ContainerDeclaration from '../structure/Container/declaration';
 import DialogContainerDeclaration from '../structure/DialogContainer/declaration';
+import DisclosureDeclaration from '../structure/Disclosure/declaration';
+import DisclosureSummaryDeclaration from '../structure/Disclosure/DisclosureSummary/declaration';
 import FocusGroupDeclaration from '../structure/FocusGroup/declaration';
 import ListDeclaration from '../structure/List/declaration';
 import ListItemDeclaration from '../structure/List/ListItem/declaration';
@@ -64,6 +66,8 @@ export const elementDeclarations = {
   Container: ContainerDeclaration,
   Custom: CustomDeclaration,
   DialogContainer: DialogContainerDeclaration,
+  Disclosure: DisclosureDeclaration,
+  DisclosureSummary: DisclosureSummaryDeclaration,
   FocusGroup: FocusGroupDeclaration,
   Dropdown: DropdownDeclaration,
   DropdownPopup: DropdownPopupDeclaration,
@@ -115,6 +119,8 @@ export {
   ContainerDeclaration,
   CustomDeclaration,
   DialogContainerDeclaration,
+  DisclosureDeclaration,
+  DisclosureSummaryDeclaration,
   FocusGroupDeclaration,
   DropdownDeclaration,
   DropdownPopupDeclaration,

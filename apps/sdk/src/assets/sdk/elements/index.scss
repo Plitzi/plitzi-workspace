@@ -12,6 +12,7 @@
 @use './not-found' as notFound;
 @use './tab-container' as tabContainer;
 @use './variants' as variants;
+@use './disclosure' as disclosure;
 @use './custom' as custom;
 @use './paragraph' as paragraph;
 @use './block-html' as blockHtml;
@@ -50,6 +51,7 @@
   @include notFound.styles;
   @include tabContainer.styles;
   @include variants.styles;
+  @include disclosure.styles;
   @include custom.styles;
   @include paragraph.styles;
   @include blockHtml.styles;

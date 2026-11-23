@@ -143,6 +143,10 @@ const STYLESHEET: Record<string, SlotRules> = {
   variants: root('.plitzi-component__variants'),
   variantItem: root('.plitzi-component__variant-item'),
   timeWindow: root('.plitzi-component__time-window'),
+  disclosure: root('.plitzi-component__disclosure'),
+  disclosureSummary: root('.plitzi-component__disclosure-summary', {
+    marker: ['.plitzi-component__disclosure-marker']
+  }),
   focusGroup: root('.plitzi-component__focus-group'),
   fontAwesome: () => ({
     base: ['.plitzi-component__fontawesome', '.plitzi-component__fontawesome:not(.fa-2x):not(.fa-3x):not(.fa-4x)']

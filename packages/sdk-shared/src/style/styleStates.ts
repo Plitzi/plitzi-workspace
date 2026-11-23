@@ -76,7 +76,8 @@ export const STYLE_STATE_MEANINGS: Record<(typeof STYLE_STATES)[number], string>
   visited: 'a link to a page the visitor has been to',
   current:
     'the chosen one of a set, as the element says it — the selected tab (aria-selected), the link to the page shown (aria-current), the pressed toggle (aria-pressed)',
-  expanded: 'the control of a panel while the panel is open — a dropdown trigger, an accordion header (aria-expanded)',
+  expanded:
+    'the control of a panel while the panel is open — a dropdown trigger, a disclosure’s summary, a menu button (aria-expanded)',
   hidden: 'how it looks while its `visible` says no — where it goes as it hides, with a transition on the class',
   first: 'the first of its siblings',
   last: 'the last of its siblings',
@@ -140,8 +141,13 @@ export const inCascadeOrder = <T>(states: Record<string, T>): [string, T][] =>
 export const CURRENT_SELECTOR =
   ':is([aria-current]:not([aria-current="false"]),[aria-pressed="true"],[aria-selected="true"],[role="tabpanel"]:not([hidden]))';
 
-/** What the `expanded` state selects: the control whose panel is open. */
-export const EXPANDED_SELECTOR = '[aria-expanded="true"]';
+/**
+ * What the `expanded` state selects: the control whose panel is open — one that says so (`aria-expanded`), or the
+ * `<summary>` of an open `<details>` (a `disclosure`), which says it through its `<details>`: ARIA has no
+ * `aria-expanded` for a summary. The summary's alternative weighs nothing (`:where`), so the state weighs the one
+ * attribute it always has and keeps its place against `hover` and the rest: weighing more, it would beat them all.
+ */
+export const EXPANDED_SELECTOR = ':is([aria-expanded="true"],:where([open]>summary))';
 
 /** The states that are not a pseudo-class of the same name, and what each is written as. */
 const STATE_SELECTORS: Partial<Record<(typeof STYLE_STATES)[number], string>> = {

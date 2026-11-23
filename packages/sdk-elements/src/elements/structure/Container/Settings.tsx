@@ -12,20 +12,14 @@ type SettingsProps = {
   subType?: ContainerProps['subType'];
   label?: string;
   decorative?: boolean;
-  open?: boolean;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ subType = 'div', label = '', decorative = false, open = false, onUpdate }: SettingsProps) => {
+const Settings = ({ subType = 'div', label = '', decorative = false, onUpdate }: SettingsProps) => {
   const update = useSettingsUpdate(onUpdate);
 
   const handleChangeDecorative = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('decorative', e.target.checked),
-    [onUpdate]
-  );
-
-  const handleChangeOpen = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('open', e.target.checked),
     [onUpdate]
   );
 
@@ -53,8 +47,6 @@ const Settings = ({ subType = 'div', label = '', decorative = false, open = fals
         <option value="h5">H5 (heading with parts)</option>
         <option value="h6">H6 (heading with parts)</option>
         <option value="span">Span (inline)</option>
-        <option value="details">Details (opens and closes)</option>
-        <option value="summary">Summary (what opens a details)</option>
       </Select>
       <Input
         value={label}
@@ -69,7 +61,6 @@ const Settings = ({ subType = 'div', label = '', decorative = false, open = fals
         onChange={handleChangeDecorative}
         size="xs"
       />
-      {subType === 'details' && <Checkbox checked={open} label="Open at start" onChange={handleChangeOpen} size="xs" />}
     </div>
   );
 };

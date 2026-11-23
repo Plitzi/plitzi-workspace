@@ -69,7 +69,7 @@ export const elementAttributeNames = {
     'titleField',
     'valueField'
   ],
-  container: ['decorative', 'label', 'live', 'open', 'subType', 'title'],
+  container: ['decorative', 'label', 'live', 'subType', 'title'],
   custom: null,
   dialogContainer: [
     'acceptButtonLabel',
@@ -78,6 +78,8 @@ export const elementAttributeNames = {
     'headerLabel',
     'rejectButtonLabel'
   ],
+  disclosure: ['closeOnClickOutside', 'closeOnNavigate', 'name', 'open'],
+  disclosureSummary: ['marker'],
   dropdown: [
     'backgroundDisabled',
     'closeOnClickBackground',

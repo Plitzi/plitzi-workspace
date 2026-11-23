@@ -303,7 +303,7 @@ describe('processSelector / the style language', () => {
 
     expect(cache).toBe(
       '.card{&:nth-child(odd){background-color:white;}&:nth-child(even){background-color:gray;}' +
-        '&:first-child{margin-top:0px;}&:last-child{margin-bottom:0px;}&[aria-expanded="true"]{color:blue;}' +
+        '&:first-child{margin-top:0px;}&:last-child{margin-bottom:0px;}&:is([aria-expanded="true"],:where([open]>summary)){color:blue;}' +
         '&:hover{color:black;}}'
     );
   });
@@ -355,6 +355,6 @@ describe('processSelector / the style language', () => {
       'chevron'
     );
 
-    expect(cache).toBe('.chevron{:where([aria-expanded="true"]) > &{rotate:180deg;}:where(:hover) > &{opacity:1;}}');
+    expect(cache).toBe('.chevron{:where(:is([aria-expanded="true"],:where([open]>summary))) > &{rotate:180deg;}:where(:hover) > &{opacity:1;}}');
   });
 });

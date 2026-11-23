@@ -32,6 +32,8 @@ import CarouselTrack from './structure/Carousel/CarouselTrack/Settings';
 import Carousel from './structure/Carousel/Settings';
 import Container from './structure/Container/Settings';
 import DialogContainer from './structure/DialogContainer/Settings';
+import DisclosureSummary from './structure/Disclosure/DisclosureSummary/Settings';
+import Disclosure from './structure/Disclosure/Settings';
 import FocusGroup from './structure/FocusGroup/Settings';
 import ListItem from './structure/List/ListItem/Settings';
 import List from './structure/List/Settings';
@@ -69,6 +71,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   focusGroup: FocusGroup,
   layoutContainer: LayoutContainer,
   dialogContainer: DialogContainer,
+  disclosure: Disclosure,
+  disclosureSummary: DisclosureSummary,
   modalContainer: ModalContainer,
   carousel: Carousel,
   carouselTrack: CarouselTrack,

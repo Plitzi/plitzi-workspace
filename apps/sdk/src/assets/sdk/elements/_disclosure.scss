@@ -1,0 +1,50 @@
+@use 'placeholder';
+
+@mixin styles {
+  .plitzi-component__disclosure-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+
+    // Safari draws its own triangle through this, whatever `list-style` says: the summary draws its marker itself.
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  .plitzi-component__disclosure-marker {
+    flex-shrink: 0;
+    margin-left: auto;
+    width: 0.45em;
+    height: 0.45em;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  // Turned while open, and on its way there unless the visitor asked for less motion. Weightless (`:where`), so any
+  // rule of the space's own for the marker says otherwise.
+  :where(
+    .plitzi-component__disclosure[open] > .plitzi-component__disclosure-summary > .plitzi-component__disclosure-marker
+  ) {
+    rotate: 180deg;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :where(.plitzi-component__disclosure-marker) {
+      transition: rotate 0.2s ease;
+    }
+  }
+
+  // A disclosure or a summary with nothing in it yet is marked in the canvas: otherwise there is nowhere to drop into.
+  .builder-iframe.builder--display-component-border {
+    .plitzi-component__disclosure,
+    .plitzi-component__disclosure-summary {
+      &.container--empty {
+        @include placeholder.empty;
+      }
+    }
+  }
+}

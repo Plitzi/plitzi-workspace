@@ -349,7 +349,7 @@ describe('MCP pseudo-elements, conditions and the parent on a class', () => {
     const cache = cap.saved().style.platform.desktop.caret.cache;
     expect(cache).toContain('&::after{content:"|";}');
     expect(cache).toContain('@container card (max-width: 30rem)');
-    expect(cache).toContain(':where([aria-expanded="true"]) > &');
+    expect(cache).toContain(':where(:is([aria-expanded="true"],:where([open]>summary))) > &');
   });
 
   it('keeps what a patch does not name — a patch rewrites the class from what it read — and removes a null', async () => {
