@@ -1,5 +1,14 @@
 # @plitzi/sdk-navigation
 
+## 0.39.12
+
+### Patch Changes
+
+- 2f5b44d: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [2f5b44d]
+  - @plitzi/sdk-shared@0.39.12
+
 ## 0.39.11
 
 ### Patch Changes
