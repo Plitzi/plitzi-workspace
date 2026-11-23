@@ -66,6 +66,7 @@ The space is not written until these are fixed.
 | `condition-template` | a `when` rule with a template in its field or value — `value: '{{ list_genres.item.id }}'` — compared as that text, so it never holds | a path: `field: 'state.picks'`; another path as the value, `value: 'list_genres.item.id', isBinding: true`; an expression, a computed value |
 | `controls-other-row` | a button's `controls` naming an element a list draws in its rows, from outside that row | the button in the same row as what it shows and hides, or `controls` naming an element outside the list |
 | `controls-unknown` | a button's `controls` naming no element of the space | the id of the element it shows and hides: `controls: 'faq-answer'` |
+| `countdown-to` | a `countdown`'s `to` that is not an instant with its offset — never read, so it counts to nothing | `to: '2026-12-01T09:00:00Z'` (or `+01:00`); empty inside a `timeWindow` to count to its `endsAt` |
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |
 | `css-property-unknown` | a CSS property that does not exist | the property it suggests; a custom property starts with `--` |
 | `css-value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
@@ -225,6 +226,8 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `control-in-decorative` | a control inside a `decorative` container — Tab lands on something nothing announces | move it out of the illustration |
 | `control-without-name` | a button or a link with no words, or a field nothing names | `title` on the button, `label` on the link, `label` (with `hideLabel: true`) on the field |
 | `controls-no-anchor` | a button's `controls` naming no anchor — `aria-controls` points at nothing | an `anchor` on the element it shows and hides, and `controls` naming it |
+| `countdown-units` | a `countdown` whose `smallest` unit is larger than its `largest` — it says the `largest` alone | `largest` the larger: `largest: 'days', smallest: 'minutes'` |
+| `countdown-without-end` | a `countdown` with no `to` and no `timeWindow` around it with an `endsAt` — it shows zeros | `to: '2026-12-01T09:00:00Z'`, or the countdown inside the `timeWindow` whose end it counts to |
 | `default-content-beside-children` | a button printing its default "Button" beside its children | `content: ''` |
 | `disclosure-summary-unnamed` | a `disclosureSummary` with nothing in it — a screen reader announces a control with no name | a text or a heading inside it: what opening it shows |
 | `dropdown-without-control` | a dropdown opened from a box or an icon — no keyboard opens it | a `button` as what opens it (`title` if it is only an icon) |

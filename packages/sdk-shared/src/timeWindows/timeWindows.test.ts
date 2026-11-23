@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { hasTimeWindows, instantOf, isWindowBound, isWindowOpen, nextWindowChange } from './timeWindows';
+import { instantOf, isWindowBound, isWindowOpen, nextWindowChange } from './timeWindows';
 
 const DEC_1 = Date.UTC(2026, 11, 1, 9);
 const DEC_8 = Date.UTC(2026, 11, 8, 9);
@@ -30,18 +30,5 @@ describe('a time window', () => {
     expect(nextWindowChange(DEC_1 - 1, '2026-12-01T09:00:00Z', '2026-12-08T09:00:00Z')).toBe(DEC_1);
     expect(nextWindowChange(DEC_1, '2026-12-01T09:00:00Z', '2026-12-08T09:00:00Z')).toBe(DEC_8);
     expect(nextWindowChange(DEC_8, '2026-12-01T09:00:00Z', '2026-12-08T09:00:00Z')).toBeUndefined();
-  });
-
-  it('is found in a space, on its pages or in its components', () => {
-    const element = (type: string) => ({
-      id: type,
-      attributes: {},
-      definition: { rootId: type, label: type, type, styleSelectors: { base: '' } }
-    });
-
-    expect(
-      hasTimeWindows({ flat: {}, components: { c: { id: 'c', rootId: 'w', flat: { w: element('timeWindow') } } } })
-    ).toBe(true);
-    expect(hasTimeWindows({ flat: { t: element('text') } })).toBe(false);
   });
 });

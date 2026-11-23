@@ -4,6 +4,7 @@ import { lintAnchors } from './anchors';
 import { lintChannels } from './channels';
 import { lintInstances } from './components';
 import { LintContext } from './context';
+import { lintCountdowns } from './countdowns';
 import { lintDataPaths } from './dataPaths';
 import { lintDisclosures } from './disclosures';
 import { lintElements } from './elements';
@@ -58,6 +59,7 @@ export const lintSpace = (
   lintVariantsElements(ctx);
   lintTimeWindows(ctx);
   lintDisclosures(ctx);
+  lintCountdowns(ctx);
   lintElements(ctx);
   lintTypeSlots(ctx);
   lintDataPaths(ctx);

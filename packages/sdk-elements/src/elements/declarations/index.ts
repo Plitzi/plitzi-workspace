@@ -13,6 +13,7 @@ import NodeHtmlDeclaration from '../advanced/NodeHtml/declaration';
 import PlitziSdkDeclaration from '../advanced/PlitziSdk/declaration';
 import ReferenceDeclaration from '../advanced/Reference/declaration';
 import ButtonDeclaration from '../basic/Button/declaration';
+import CountdownDeclaration from '../basic/Countdown/declaration';
 import DropdownDeclaration from '../basic/Dropdown/declaration';
 import DropdownPopupDeclaration from '../basic/Dropdown/DropdownPopup/declaration';
 import HeadingDeclaration from '../basic/Heading/declaration';
@@ -60,6 +61,7 @@ export const elementDeclarations = {
   BlockHtml: BlockHtmlDeclaration,
   BlockJsx: BlockJsxDeclaration,
   Button: ButtonDeclaration,
+  Countdown: CountdownDeclaration,
   Carousel: CarouselDeclaration,
   CarouselTrack: CarouselTrackDeclaration,
   Channel: ChannelDeclaration,
@@ -113,6 +115,7 @@ export {
   BlockHtmlDeclaration,
   BlockJsxDeclaration,
   ButtonDeclaration,
+  CountdownDeclaration,
   CarouselDeclaration,
   CarouselTrackDeclaration,
   ChannelDeclaration,

@@ -1,4 +1,4 @@
-# A/B tests, audiences and time windows
+# A/B tests, audiences, time windows and countdowns
 
 A `variants` shows each visitor one of its variants — chosen **by chance** (an A/B test: each variant a share of the
 visitors, and a visitor kept on theirs) or **by rules** (an audience: the first variant whose rule they match). This
@@ -118,6 +118,14 @@ one, so the page hydrates as drawn; then it follows the browser's clock and show
 closes (`nextWindowChange`). A kept page is drawn at the instant it was rendered: within the cache's lifetime of a
 bound, the first paint may show the other side, which the page corrects as it starts. Not access control — what it
 holds is in the space's document.
+
+`countdown` (Basic) says how long is left until its `to`, or until the `endsAt` of the time window it is in
+(`TimeWindowContext`), each unit from `largest` down to `smallest` named in the space's language through `Intl`
+(`countdownLabel`). It reads the same `clock`: a space with either reads it (`readsTheClock`, `helpers/clock.ts` in
+the page server), so a countdown is drawn with the figures of the instant the page rendered and hydrates on them, then
+counts on to each second (`nextCountdownTick`). It is a `<time datetime>` with `role="timer"`, which a screen reader does
+not read out as it changes. At zero it stays at zero and runs `onCountdownEnd`, once per page, when it gets there or
+when the page opens past it.
 
 ## In the builder
 

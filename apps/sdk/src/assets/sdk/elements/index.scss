@@ -13,6 +13,7 @@
 @use './tab-container' as tabContainer;
 @use './variants' as variants;
 @use './disclosure' as disclosure;
+@use './countdown' as countdown;
 @use './custom' as custom;
 @use './paragraph' as paragraph;
 @use './block-html' as blockHtml;
@@ -52,6 +53,7 @@
   @include tabContainer.styles;
   @include variants.styles;
   @include disclosure.styles;
+  @include countdown.styles;
   @include custom.styles;
   @include paragraph.styles;
   @include blockHtml.styles;

@@ -125,7 +125,7 @@ export type CommonState = {
    */
   visitor?: VisitorFacts;
   /**
-   * The instant this page is drawn at, for what shows by the time (`timeWindow`): the server's, when it drew the page —
+   * The instant this page is drawn at, for what shows or says things by the time (`timeWindow`, `countdown`): the server's, when it drew the page —
    * the page hydrates at it, then follows its own clock — or the one the builder simulates (`simulated`), which it keeps.
    */
   clock?: { at: number; simulated?: boolean };

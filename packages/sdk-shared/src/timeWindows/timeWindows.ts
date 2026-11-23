@@ -1,5 +1,3 @@
-import type { Schema } from '../types';
-
 /** The element that shows what it holds only between two instants. */
 export const TIME_WINDOW_TYPE = 'timeWindow';
 
@@ -37,9 +35,3 @@ export const nextWindowChange = (now: number, from: unknown, until: unknown): nu
   [instantOf(from), instantOf(until)]
     .filter((at): at is number => at !== undefined && at > now)
     .sort((a, b) => a - b)[0];
-
-/** Whether a space has a time window, on its pages or in its components: its pages are drawn at an instant. */
-export const hasTimeWindows = (schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'components'>>): boolean =>
-  [schema.flat, ...Object.values(schema.components ?? {}).map(component => component.flat)].some(flat =>
-    Object.values(flat).some(element => element.definition.type === TIME_WINDOW_TYPE)
-  );

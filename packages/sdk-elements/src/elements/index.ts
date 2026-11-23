@@ -6,6 +6,7 @@ import NodeHtml from './advanced/NodeHtml';
 import Reference from './advanced/Reference';
 // Basic
 import Button from './basic/Button';
+import Countdown from './basic/Countdown';
 import Dropdown from './basic/Dropdown';
 import Heading from './basic/Heading';
 import Link from './basic/Link';
@@ -51,6 +52,7 @@ export * from './advanced/Custom';
 export * from './advanced/Reference';
 export * from './advanced/NodeHtml';
 export * from './basic/Button';
+export * from './basic/Countdown';
 export * from './basic/Dropdown';
 export * from './basic/Heading';
 export * from './basic/Link';
@@ -112,6 +114,7 @@ export {
   Svg,
   FontAwesome,
   Button,
+  Countdown,
   Paragraph,
   RichText,
   Text,

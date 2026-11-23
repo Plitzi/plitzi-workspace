@@ -2,7 +2,8 @@
 '@plitzi/cli': patch
 ---
 
-Variants are a Structure element; a new `disclosure` opens and closes what it holds.
+Variants are a Structure element; a new `disclosure` opens and closes what it holds, and a `countdown` says how long is
+left.
 
 ## Elements
 
@@ -17,3 +18,8 @@ Variants are a Structure element; a new `disclosure` opens and closes what it ho
   `expanded` state — which now matches an open `<details>`'s summary as well as `aria-expanded`.
 - **`container` no longer takes `subType: 'details'` / `'summary'` nor `open`**: a document that used them is refused
   (`attribute-value`, `unknown-attribute` for `open`); write a `disclosure`.
+- **`countdown`: how long is left until an instant** — `to`, or the `endsAt` of the `timeWindow` it is in. Days to
+  seconds (`largest`, `smallest`), its units named in the space's language (`labels`: long, short or none; `locale`).
+  Drawn by the server at the instant it renders and counting on in the browser; at zero it runs `onCountdownEnd`
+  (`onCountdownEnd()` in authoring). Its `unit`, `value` and `label` slots style it. The lint refuses a `to` without
+  its offset (`countdown-to`) and warns of one with nothing to count to (`countdown-without-end`).

@@ -137,3 +137,8 @@ between the two instants — ISO 8601 with the offset, never a local time (`time
 bound. An open page shows or hides it when the window opens or closes. In the builder it always shows while editing;
 the preview reads it at the date chosen in the Visitor tab.
 
+`countdown({ to: '2026-12-01T09:00:00Z' })` says how long is left — days to seconds, named in the space's language
+(`labels: 'short'` or `'none'`; `largest: 'hours'` says 49 hours) — and `countdown()` inside a `timeWindow` counts to its
+`endsAt`, so the date is written once. At zero it stays at zero and runs `onCountdownEnd`: reveal what waited with a
+flow, or hide the countdown with the window around it. Style its slots — `unit`, `value`, `label` — for boxes or a line.
+

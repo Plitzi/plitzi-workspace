@@ -17,7 +17,7 @@ const instantOfField = (value: string): number | undefined => {
 };
 
 /**
- * The instant the canvas's preview is shown at, for what the space shows by the time (`timeWindow`) — written and read
+ * The instant the canvas's preview is shown at, for what the space shows or says by the time (`timeWindow`, `countdown`) — written and read
  * in UTC, as the windows are. Left empty, the editor's own clock.
  */
 const SimulatedTime = () => {
@@ -43,7 +43,9 @@ const SimulatedTime = () => {
 
   return (
     <section className="border-ui-line flex flex-col gap-2 border-t pt-2">
-      <h6 className="text-ui-fg-subtle px-1 text-[10px] font-semibold tracking-wider uppercase">For time windows</h6>
+      <h6 className="text-ui-fg-subtle px-1 text-[10px] font-semibold tracking-wider uppercase">
+        For time windows and countdowns
+      </h6>
       <Input
         label="Date and time (UTC)"
         size="xs"

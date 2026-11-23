@@ -32,6 +32,7 @@ export const defaultElements = {
   svg: elements.Svg,
   fontAwesome: elements.FontAwesome,
   button: elements.Button,
+  countdown: elements.Countdown,
   paragraph: elements.Paragraph,
   text: elements.Text,
   themeToggle: elements.ThemeToggle,

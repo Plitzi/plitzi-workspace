@@ -1,10 +1,11 @@
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 import { isWindowOpen, nextWindowChange } from '@plitzi/sdk-shared/timeWindows';
 
+import TimeWindowContext from './TimeWindowContext';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
@@ -48,12 +49,13 @@ const TimeWindow = ({ ref, className = '', children, startsAt = '', endsAt = '' 
 
   // Editing in the builder, what it holds is always there to edit; its preview shows it at the instant simulated.
   const open = (builder && !previewMode) || isWindowOpen(now, startsAt, endsAt);
+  const around = useMemo(() => ({ endsAt }), [endsAt]);
 
   return (
     // Closed, it keeps its node — to open in place when its start comes — but takes no room: a column's gap around an
     // empty box spaced the offers beside it apart.
     <RootElement ref={ref} className={clsx('plitzi-component__time-window', className, { [HIDDEN_CLASS]: !open })}>
-      {open && children}
+      {open && <TimeWindowContext value={around}>{children}</TimeWindowContext>}
     </RootElement>
   );
 };

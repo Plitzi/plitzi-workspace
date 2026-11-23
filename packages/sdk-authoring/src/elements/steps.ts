@@ -161,6 +161,8 @@ export const onBlur = (): StepSpec => on('onBlur');
 export const onChange = (): StepSpec => on('onChange');
 export const onThemeChange = (): StepSpec => on('onThemeChange');
 export const onPageChange = (): StepSpec => on('onPageChange');
+/** A countdown reached zero — while somebody watched, or before the page opened: once per page. */
+export const onCountdownEnd = (): StepSpec => on('onCountdownEnd');
 export const onModalOpen = (): StepSpec => on('onModalOpen');
 export const onModalClose = (): StepSpec => on('onModalClose');
 export const onDialogOpen = (): StepSpec => on('onDialogOpen');

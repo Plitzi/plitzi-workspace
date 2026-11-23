@@ -5,6 +5,7 @@ import NodeHtml from './advanced/NodeHtml/Settings';
 import PlitziSdk from './advanced/PlitziSdk/Settings';
 import Reference from './advanced/Reference/Settings';
 import Button from './basic/Button/Settings';
+import Countdown from './basic/Countdown/Settings';
 import DropdownPopup from './basic/Dropdown/DropdownPopup/Settings';
 import Dropdown from './basic/Dropdown/Settings';
 import Heading from './basic/Heading/Settings';
@@ -91,6 +92,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   svg: Svg,
   fontAwesome: FontAwesome,
   button: Button,
+  countdown: Countdown,
   paragraph: Paragraph,
   text: Text,
   themeToggle: ThemeToggle,

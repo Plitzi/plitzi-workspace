@@ -40,6 +40,11 @@ export const carouselTrack = defineElement(elementDeclarations.CarouselTrack);
 export const chart = defineElement(elementDeclarations.Chart);
 export const channel = defineElement(elementDeclarations.Channel);
 export const container = defineElement(elementDeclarations.Container);
+/**
+ * How long is left until an instant: `countdown({ to: '2026-12-01T09:00:00Z' })`, or `countdown()` inside a `timeWindow`
+ * to count to its end. `onCountdownEnd` runs a flow at zero.
+ */
+export const countdown = defineElement(elementDeclarations.Countdown);
 export const custom = defineElement(elementDeclarations.Custom);
 export const dialogContainer = defineElement(elementDeclarations.DialogContainer);
 /**

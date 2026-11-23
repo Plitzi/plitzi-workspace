@@ -70,6 +70,7 @@ export const elementAttributeNames = {
     'valueField'
   ],
   container: ['decorative', 'label', 'live', 'subType', 'title'],
+  countdown: ['labels', 'largest', 'locale', 'smallest', 'to'],
   custom: null,
   dialogContainer: [
     'acceptButtonLabel',

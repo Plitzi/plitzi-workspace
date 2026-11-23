@@ -1,0 +1,14 @@
+@mixin styles {
+  .plitzi-component__countdown {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .plitzi-component__countdown-unit {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25em;
+  }
+}

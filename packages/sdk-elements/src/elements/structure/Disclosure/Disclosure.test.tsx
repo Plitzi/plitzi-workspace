@@ -26,7 +26,8 @@ const setElementState = <S extends Record<string, unknown> = Record<string, unkn
   value?: S | ((prev: S) => S)
 ): boolean => {
   // The disclosure's own writes are updaters over the state it was handed: none, here.
-  const empty = {} as S; // eslint-disable-line @typescript-eslint/consistent-type-assertions -- no state to start from: `{}` is every state's empty one
+  // No state to start from: `{}` is every state's empty one, a cast as the type is the caller's.
+  const empty = {} as S;
   written.push(typeof value === 'function' ? value(empty) : (value ?? empty));
 
   return true;

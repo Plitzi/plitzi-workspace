@@ -392,7 +392,7 @@ export type PlitziSdkProps = {
    */
   serverVisitor?: VisitorFacts;
   /**
-   * Set by the server that rendered this page, for a space that shows things by the time (`timeWindow`): the instant it
+   * Set by the server that rendered this page, for a space that shows or says things by the time (`timeWindow`, `countdown`): the instant it
    * drew the page at, in ms — the page hydrates at it, then follows its own clock.
    */
   renderedAt?: number;

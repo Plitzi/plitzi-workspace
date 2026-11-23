@@ -143,6 +143,11 @@ const STYLESHEET: Record<string, SlotRules> = {
   variants: root('.plitzi-component__variants'),
   variantItem: root('.plitzi-component__variant-item'),
   timeWindow: root('.plitzi-component__time-window'),
+  countdown: root('.plitzi-component__countdown', {
+    unit: ['.plitzi-component__countdown-unit'],
+    value: ['.plitzi-component__countdown-value'],
+    label: ['.plitzi-component__countdown-label']
+  }),
   disclosure: root('.plitzi-component__disclosure'),
   disclosureSummary: root('.plitzi-component__disclosure-summary', {
     marker: ['.plitzi-component__disclosure-marker']
