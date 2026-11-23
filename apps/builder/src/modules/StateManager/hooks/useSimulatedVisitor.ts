@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { languageFrom } from '@plitzi/sdk-shared/audiences';
+import { countryFrom, languageFrom } from '@plitzi/sdk-shared/audiences';
 import { useBuilderStore, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 
 import type { DisplayMode } from '@plitzi/sdk-shared';
@@ -18,7 +18,9 @@ const useSimulatedVisitor = (displayMode: DisplayMode): VisitorFacts => {
     (): VisitorFacts => ({
       device: simulation?.device ?? displayMode,
       language: simulation?.language ?? languageFrom(typeof navigator === 'undefined' ? '' : navigator.language),
-      returning: simulation?.returning ?? false
+      returning: simulation?.returning ?? false,
+      // Nothing in front of the editor says one: none until the Visitor tab chooses it.
+      country: countryFrom(simulation?.country)
     }),
     [displayMode, simulation]
   );

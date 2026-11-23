@@ -35,3 +35,7 @@ left, and a new User category holds `avatar`, `account` and `signInForm`.
   page's by default), or copies it where there is none, and answers `{ shared, copied }`. `fullscreen('element-id',
   mode?)` shows any element on the whole screen and back (`toggle`, `enter`, `exit`), failing into `onFailure` where the
   browser cannot.
+- **`visitor.country` in a variant's rules**: ISO 3166-1 alpha-2 (`ES`), read by the page server off the header the
+  CDN in front says it in (Cloudflare's, CloudFront's, Vercel's); empty with none, and with no server. It decides what a
+  page shows, never who may see it — any visitor can send the header to a server with no CDN in front. The builder's
+  Visitor tab simulates it, and a page reading it is kept apart by it in the page cache.

@@ -83,7 +83,12 @@ describe('prepareRender / audiences and time windows', () => {
   it('hands the browser the visitor the page was drawn for', async () => {
     const prep = await prepared('device=mobile');
 
-    expect(prep.componentProps.serverVisitor).toEqual({ returning: false, language: 'es', device: 'mobile' });
+    expect(prep.componentProps.serverVisitor).toEqual({
+      returning: false,
+      language: 'es',
+      device: 'mobile',
+      country: ''
+    });
     expect(prep.templateParams.offlineData).toContain('"serverVisitor":');
     expect(prep.cacheable).toBe(true);
   });

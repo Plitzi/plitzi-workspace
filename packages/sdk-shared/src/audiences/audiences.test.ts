@@ -4,6 +4,7 @@ import {
   audienceFactsUsed,
   audienceKeyOf,
   chooseAudienceVariant,
+  countryFrom,
   deviceFromUserAgent,
   isReturning,
   languageFrom,
@@ -54,6 +55,14 @@ describe('a visitor’s facts', () => {
     expect(languageFrom(undefined)).toBe('');
   });
 
+  it('say the country as an edge says it, in capitals, and none for what is no country', () => {
+    expect(countryFrom('es')).toBe('ES');
+    expect(countryFrom(' MX ')).toBe('MX');
+    expect(countryFrom('XX')).toBe('');
+    expect(countryFrom('Spain')).toBe('');
+    expect(countryFrom(undefined)).toBe('');
+  });
+
   it('say a visitor is returning once their first visit is over', () => {
     const now = 1_800_000_000_000;
 
@@ -68,7 +77,7 @@ describe('a visitor’s facts', () => {
         acceptLanguage: 'es',
         now
       })
-    ).toEqual({ returning: true, language: 'es', device: 'mobile' });
+    ).toEqual({ returning: true, language: 'es', device: 'mobile', country: '' });
     expect(seenCookie('example.com', now, { secure: true })).toBe(
       'plitzi_seen=1800000000; Path=/; Max-Age=31536000; SameSite=Lax; Secure'
     );
@@ -80,7 +89,7 @@ describe('an audience', () => {
     const rules = [rule('visitor.device', 'mobile'), rule('queryParams.utm_source', 'ads'), undefined];
     const scope = (device: 'mobile' | 'desktop', utm?: string) => ({
       queryParams: utm ? { utm_source: utm } : {},
-      visitor: { returning: false, language: 'en', device }
+      visitor: { returning: false, language: 'en', device, country: '' }
     });
 
     expect(chooseAudienceVariant(rules, scope('mobile', 'ads'))).toBe(0);
@@ -103,8 +112,12 @@ describe('an audience', () => {
     expect(audienceFactsUsed({ flat: { b, welcome: variants('welcome', 'rules', ['b']) } })).toEqual([]);
     // Chosen by chance, its variants' rules decide nothing: the pages are not kept apart by them.
     expect(audienceFactsUsed({ flat: { a, b, welcome: variants('welcome', 'chance', ['a', 'b']) } })).toEqual([]);
-    expect(audienceKeyOf({ returning: true, language: 'es', device: 'mobile' }, ['language', 'device'])).toBe(
-      'language=es;device=mobile'
-    );
+    expect(
+      audienceKeyOf({ returning: true, language: 'es', device: 'mobile', country: 'AR' }, ['language', 'device'])
+    ).toBe('language=es;device=mobile');
+    const byCountry = variant('c', rule('visitor.country', 'AR'));
+    expect(audienceFactsUsed({ flat: { byCountry, local: variants('local', 'rules', ['byCountry']) } })).toEqual([
+      'country'
+    ]);
   });
 });

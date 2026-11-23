@@ -35,7 +35,14 @@ describe('audiences on the server', () => {
   });
 
   it('reads the visitor off the request', () => {
-    expect(requestVisitorFacts(request(IPHONE))).toEqual({ returning: false, language: 'es', device: 'mobile' });
+    expect(requestVisitorFacts(request(IPHONE))).toEqual({
+      returning: false,
+      language: 'es',
+      device: 'mobile',
+      country: ''
+    });
+    const fromCloudflare = { headers: { ...request(IPHONE).headers, 'cf-ipcountry': 'ar' } };
+    expect(requestVisitorFacts(fromCloudflare).country).toBe('AR');
   });
 
   it('keys a page by the facts its audiences read, by none where they read none, and not at all for a space not held', () => {

@@ -11,11 +11,12 @@ export type VisitorDevice = 'mobile' | 'tablet' | 'desktop';
 
 /**
  * What an audience's rules know of the visitor beyond what a flag's do, read as `visitor.<fact>`: whether they came
- * before, the language their browser asks for first (its primary subtag: `es`, `en`) and the kind of device.
+ * before, the language their browser asks for first (its primary subtag: `es`, `en`), the kind of device, and the
+ * country they are in (ISO 3166-1 alpha-2: `ES`, `MX`) — empty where nothing in front of the server says it.
  */
-export type VisitorFacts = { returning: boolean; language: string; device: VisitorDevice };
+export type VisitorFacts = { returning: boolean; language: string; device: VisitorDevice; country: string };
 
-export const VISITOR_FACTS = ['returning', 'language', 'device'] as const;
+export const VISITOR_FACTS = ['returning', 'language', 'device', 'country'] as const;
 
 export type VisitorFact = (typeof VISITOR_FACTS)[number];
 
@@ -42,6 +43,23 @@ export const deviceFromUserAgent = (userAgent: string | undefined, mobileHint?: 
 /** The language a browser asks for first, by its primary subtag — `es` for `es-AR,es;q=0.9,en;q=0.8` — or none. */
 export const languageFrom = (preferred: string | undefined): string =>
   (preferred ?? '').split(',')[0]?.split(';')[0]?.split('-')[0]?.trim().toLowerCase() ?? '';
+
+/**
+ * The headers a CDN in front of the server says the visitor's country in, the first one present winning: Cloudflare's,
+ * CloudFront's, Vercel's. A server with none in front gets none — and any visitor could send one, so a country is for
+ * what a page shows, never for who may see it.
+ */
+export const COUNTRY_HEADERS = ['cf-ipcountry', 'cloudfront-viewer-country', 'x-vercel-ip-country'] as const;
+
+/**
+ * A country as an edge says it, as rules compare it: two letters, upper case — `ES` for `es` — or none for what is no
+ * country (`XX`, unknown, and `T1`, Tor, as Cloudflare says them).
+ */
+export const countryFrom = (value: string | undefined): string => {
+  const code = (value ?? '').trim().toUpperCase();
+
+  return /^[A-Z]{2}$/.test(code) && code !== 'XX' ? code : '';
+};
 
 /**
  * The cookie that says when a visitor was first seen, in seconds since the epoch (UTC): what makes them returning. Named
@@ -80,13 +98,14 @@ export const seenCookie = (host: string | undefined, now: number, { secure }: { 
     ...(secure ? ['Secure'] : [])
   ].join('; ');
 
-/** A visitor's facts, as a request says them: its cookies, its agent and its languages. */
+/** A visitor's facts, as a request says them: its cookies, its agent, its languages and the country its edge said. */
 export const visitorFactsOf = ({
   cookies,
   host,
   userAgent,
   mobileHint,
   acceptLanguage,
+  country,
   now
 }: {
   cookies: string | undefined;
@@ -94,14 +113,16 @@ export const visitorFactsOf = ({
   userAgent: string | undefined;
   mobileHint?: string;
   acceptLanguage: string | undefined;
+  country?: string;
   now: number;
 }): VisitorFacts => ({
   returning: isReturning(firstSeenOf(cookies, host), now),
   language: languageFrom(acceptLanguage),
-  device: deviceFromUserAgent(userAgent, mobileHint)
+  device: deviceFromUserAgent(userAgent, mobileHint),
+  country: countryFrom(country)
 });
 
-/** The visitor facts an audience's rule reads: `visitor.device`, `visitor.language`, `visitor.returning`. */
+/** The visitor facts an audience's rule reads: `visitor.device`, `visitor.language`, `visitor.returning`, `.country`. */
 const factsReadBy = (when: unknown, read: Set<VisitorFact>): void => {
   if (!isRecord(when)) {
     return;
@@ -154,7 +175,8 @@ export const chooseAudienceVariant = (rules: readonly unknown[], scope: Audience
 
 /**
  * This page's visitor facts, in a browser that no server drew it for (a space with no server in front): read once,
- * so every audience of the page decides on the same ones — a visit's returning-ness does not flip under it.
+ * so every audience of the page decides on the same ones — a visit's returning-ness does not flip under it. No country:
+ * only an edge in front of a server knows it.
  */
 let pageFacts: VisitorFacts | undefined;
 

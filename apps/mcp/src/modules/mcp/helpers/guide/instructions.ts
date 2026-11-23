@@ -146,7 +146,7 @@ a \`navigate\` interaction.
 element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`. A \`variants\` shows each visitor one of its
 \`variantItem\`s: by chance (an A/B test, 2–5 variants, each \`weight\` its share; each visitor keeps theirs, read as
 \`{{ experiments.<experiment> }}\` — \`'a'\`, \`'b'\`…, its id when unnamed; a \`reachGoal\` step counts a conversion) or, with
-\`chooseBy: 'rules'\`, the first whose \`when\` (a flag's rule fields, plus \`visitor.returning\`/\`language\`/\`device\`)
+\`chooseBy: 'rules'\`, the first whose \`when\` (a flag's rule fields, plus \`visitor.returning\`/\`language\`/\`device\`/\`country\`)
 matches; end those with one without \`when\`. A \`timeWindow\` shows its children only between \`startsAt\` and \`endsAt\`
 (ISO 8601 with the offset); a \`countdown\` says how long is left until its \`to\`, or its window's end.
 

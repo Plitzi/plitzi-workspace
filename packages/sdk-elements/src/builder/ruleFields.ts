@@ -52,7 +52,7 @@ const DEVICES = ['mobile', 'tablet', 'desktop'];
 
 /**
  * What an audience's rule may be written over: what a flag's may, and the visitor's facts — whether they came before,
- * the language their browser asks for first, the kind of device.
+ * the language their browser asks for first, the kind of device, the country an edge in front of the server says.
  */
 export const audienceRuleFields = (context: Parameters<typeof flagRuleFields>[0]): Record<string, Field> => ({
   ...flagRuleFields(context),
@@ -63,5 +63,6 @@ export const audienceRuleFields = (context: Parameters<typeof flagRuleFields>[0]
     label: 'Visitor device',
     inputType: 'select',
     options: DEVICES.map(device => ({ value: device, label: device }))
-  }
+  },
+  'visitor.country': { name: 'visitor.country', label: 'Visitor country', placeholder: 'ES, MX, US…' }
 });

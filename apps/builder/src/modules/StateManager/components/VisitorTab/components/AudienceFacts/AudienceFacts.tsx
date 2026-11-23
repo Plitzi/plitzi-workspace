@@ -14,8 +14,9 @@ const isDevice = (value: string): value is VisitorDevice =>
   value === 'mobile' || value === 'tablet' || value === 'desktop';
 
 /**
- * What the canvas's visitor is for the space's audiences — the device, the language, whether they came before — each
- * left to what the builder says by itself until chosen: the device the canvas is sized as, the editor's language.
+ * What the canvas's visitor is for the space's audiences — the device, the language, the country, whether they came
+ * before — each left to what the builder says by itself until chosen: the device the canvas is sized as, the editor's
+ * language, no country.
  */
 const AudienceFacts = () => {
   const [[simulation, visitor]] = useBuilderStore(['visitorSimulation', 'visitor']);
@@ -34,6 +35,16 @@ const AudienceFacts = () => {
       const { language: _language, ...rest } = simulation ?? {};
       const language = value.trim().toLowerCase();
       setSimulation(language ? { ...rest, language } : rest);
+    },
+    [simulation, setSimulation]
+  );
+
+  const handleCountry = useCallback(
+    (value: string) => {
+      const { country: _country, ...rest } = simulation ?? {};
+      // Kept as typed, two letters at most: read as a country only once it is one (`useSimulatedVisitor`).
+      const country = value.trim().toUpperCase().slice(0, 2);
+      setSimulation(country ? { ...rest, country } : rest);
     },
     [simulation, setSimulation]
   );
@@ -60,6 +71,13 @@ const AudienceFacts = () => {
         placeholder={visitor?.language || 'en'}
         value={simulation?.language ?? ''}
         onChange={handleLanguage}
+      />
+      <Input
+        label="Country"
+        size="xs"
+        placeholder="ES, MX, US…"
+        value={simulation?.country ?? ''}
+        onChange={handleCountry}
       />
       <Checkbox
         checked={simulation?.returning ?? false}

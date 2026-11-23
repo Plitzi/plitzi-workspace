@@ -1,5 +1,5 @@
 import { requestAuthority } from '@plitzi/sdk-kernel/http';
-import { audienceFactsUsed, audienceKeyOf, visitorFactsOf } from '@plitzi/sdk-shared/audiences';
+import { audienceFactsUsed, audienceKeyOf, COUNTRY_HEADERS, visitorFactsOf } from '@plitzi/sdk-shared/audiences';
 import { chooseByOf, variantsElementsOf } from '@plitzi/sdk-shared/variants';
 
 import type { SSRRequest } from '@plitzi/sdk-kernel/types';
@@ -33,7 +33,10 @@ export const spaceAudiences = (schema: SpaceTrees): SpaceAudiences => {
 const headerOf = (value: string | string[] | undefined): string | undefined =>
   Array.isArray(value) ? value[0] : value;
 
-/** This request's visitor, as an audience's rules read them: their first visit's cookie, their agent, their languages. */
+/**
+ * This request's visitor, as an audience's rules read them: their first visit's cookie, their agent, their languages,
+ * and the country the CDN in front said (`COUNTRY_HEADERS`).
+ */
 export const requestVisitorFacts = (req: Pick<SSRRequest, 'headers'>): VisitorFacts =>
   visitorFactsOf({
     cookies: req.headers.cookie,
@@ -41,6 +44,7 @@ export const requestVisitorFacts = (req: Pick<SSRRequest, 'headers'>): VisitorFa
     userAgent: headerOf(req.headers['user-agent']),
     mobileHint: headerOf(req.headers['sec-ch-ua-mobile']),
     acceptLanguage: headerOf(req.headers['accept-language']),
+    country: COUNTRY_HEADERS.map(name => headerOf(req.headers[name])).find(Boolean),
     now: Date.now()
   });
 

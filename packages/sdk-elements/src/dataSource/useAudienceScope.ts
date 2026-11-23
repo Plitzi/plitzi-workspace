@@ -9,7 +9,7 @@ import type { AuthContextValue } from '@plitzi/sdk-shared';
 import type { AudienceScope, VisitorFacts } from '@plitzi/sdk-shared/audiences';
 
 /** What a render with no visitor to read assumes of them: a server rendering a space it was not handed facts for. */
-const NO_VISITOR: VisitorFacts = { returning: false, language: '', device: 'desktop' };
+const NO_VISITOR: VisitorFacts = { returning: false, language: '', device: 'desktop', country: '' };
 
 /**
  * What an audience's rules are matched against here: what a flag's are — the environment, the host, the address, who is

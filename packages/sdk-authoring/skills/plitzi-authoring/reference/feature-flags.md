@@ -110,7 +110,8 @@ is authorized: the dev tools' **Experiments** tab, or `?ab=heroTest:b` in the ad
 
 **By rules** — `chooseBy: 'rules'` — it shows the first variant whose `when` the visitor matches: a rule group over what a
 flag's rules see, `queryParams.utm_source` included, and the visitor: `visitor.returning`, `visitor.language` (`es`),
-`visitor.device` (`mobile`, `tablet`, `desktop`). End it with a variant with no `when`, for everybody else
+`visitor.device` (`mobile`, `tablet`, `desktop`), `visitor.country` (`ES`, `MX` — what the CDN in front of the server
+says; empty without one, so end with an "everybody else"). End it with a variant with no `when`, for everybody else
 (`variants-no-fallback` warns otherwise):
 
 ```ts

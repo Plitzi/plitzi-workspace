@@ -40,7 +40,7 @@ const entry = elementEntry('pricing-test', {
   }
 });
 
-const desktop = (language: string): VisitorFacts => ({ returning: false, language, device: 'desktop' });
+const desktop = (language: string): VisitorFacts => ({ returning: false, language, device: 'desktop', country: '' });
 
 /** The element drawn in a store holding the space's variants, the visitor and what the surface says. */
 const drawn = (props: VariantsProps, store: Record<string, unknown> = {}, flat: Record<string, unknown> = ruled) =>

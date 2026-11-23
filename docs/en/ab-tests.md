@@ -95,7 +95,11 @@ match; one with no conditions matches everybody, the "everyone else" it ends wit
 do (`environment`, `hostname`, `routeParams.*`, `queryParams.*` — `utm_source` and the like —, `user.*`) and the
 visitor's facts (`@plitzi/sdk-shared/audiences`): `visitor.returning` (first seen more than a visit — 30 minutes — ago,
 by the `plitzi_seen` cookie the SDK writes once), `visitor.language` (the primary subtag of the first language asked
-for) and `visitor.device` (`mobile`, `tablet`, `desktop`, by the `Sec-CH-UA-Mobile` hint or the user agent).
+for), `visitor.device` (`mobile`, `tablet`, `desktop`, by the `Sec-CH-UA-Mobile` hint or the user agent) and
+`visitor.country` (ISO 3166-1 alpha-2, `ES`, from the header the CDN in front of the page server says it in —
+`COUNTRY_HEADERS`: Cloudflare's, CloudFront's, Vercel's — and empty with none, or with no server: a browser alone cannot
+know it). Any visitor can send that header to a server with no CDN in front: a country decides what a page shows, never
+who may see it.
 
 The page server reads the facts off the request (`requestVisitorFacts`) and hands them to the browser
 (`serverVisitor`), which hydrates the variant drawn; with no server, the browser reads them itself, once per page

@@ -26,7 +26,7 @@ const declaration = elementDeclaration<VariantsAttributes>()({
         "}}` reads the visitor's (`'a'`, `'b'`…). By rules (`chooseBy: 'rules'`) it shows the first variant whose " +
         '`when` the visitor matches: a rule group over what a flag sees — `queryParams.<name>` (`utm_source`…), ' +
         '`user.authenticated`, `user.roles`… — and the visitor: `visitor.returning`, `visitor.language` (`es`), ' +
-        '`visitor.device` (`mobile`, `tablet`, `desktop`); a variant with no conditions is for everybody else, last. ' +
+        '`visitor.device` (`mobile`, `tablet`, `desktop`), `visitor.country` (`ES`, as the CDN in front says it); a variant with no conditions is for everybody else, last. ' +
         'Each variant keeps both, so switching how it chooses loses neither. The server draws only the variant shown.',
       items: []
     },
