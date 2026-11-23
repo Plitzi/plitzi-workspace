@@ -8,6 +8,7 @@ import { elementIdConflict, slugifyElementId, FlatMap } from '@plitzi/sdk-schema
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import AppContext from '@pmodules/App/AppContext';
 import { processPaste } from '@pmodules/Builder/BuilderHelper';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
@@ -29,6 +30,7 @@ const BuilderTree = () => {
     'setSelected'
   ]);
   const { componentDefinitions } = use(ComponentContext);
+  const { previewMode } = use(AppContext);
   const { addToast } = useToast();
   const { mutate } = useBuilderNetwork();
   const {
@@ -156,13 +158,13 @@ const BuilderTree = () => {
   );
 
   const nodes = useMemo(() => {
-    const nodesMapped = recursiveMap(flat, componentDefinitions.current, baseElementId);
+    const nodesMapped = recursiveMap(flat, componentDefinitions.current, baseElementId, !previewMode);
     if (!baseElementId || !nodesMapped) {
       return [];
     }
 
     return [nodesMapped];
-  }, [flat, componentDefinitions, baseElementId]);
+  }, [flat, componentDefinitions, baseElementId, previewMode]);
 
   const handleCopy = useCallback(
     (e: ClipboardEvent) => {

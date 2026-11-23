@@ -52,6 +52,8 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   which a column's gap spaced the content around: now hidden as a hidden element is, their node kept to open in place.
 - **The builder goes back to the space it was opened for.** Its menu's **Back to the space** opens the space's console
   (`/spaces/<its address name>`), not the list of every space; **Domains and targets** names it the same way.
+- **Layers says which variant is on screen.** Under a Variants element each variant reads which it is — A, B… or 1,
+  2… — and the one the canvas shows while editing has its icon lit and "on screen" beside it; the others are faded.
 - **Element settings say what they are.** The Settings tab's duplicate "Settings" heading is now the element's name
   over its own fields, and the flag gate every element has reads "Feature flag (optional) — None, not tied to a flag"
   rather than "Always rendered", which read as a flag in use.
