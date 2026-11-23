@@ -10,6 +10,7 @@ import { isRecord, emptyObject } from '@plitzi/sdk-shared/helpers';
 
 import useElementInteractions from './useElementInteractions';
 import useFocusInteractions from './useFocusInteractions';
+import useFullscreenInteractions from './useFullscreenInteractions';
 import useInternalClassName from './useInternalClassName';
 import useIntervalTriggers from './useIntervalTriggers';
 import useKeyTriggers from './useKeyTriggers';
@@ -178,9 +179,16 @@ const useRootElementInteractions = ({
     interactionsManager
   });
   const focusCallbacks = useFocusInteractions({ label: definition.label, nodeRef });
+  const fullscreenCallbacks = useFullscreenInteractions({ label: definition.label, nodeRef });
   const callbacks = useMemo(
-    () => ({ ...interactionCallbacks, ...scrollCallbacks, ...focusCallbacks, ...basicCallbacks }),
-    [interactionCallbacks, scrollCallbacks, focusCallbacks, basicCallbacks]
+    () => ({
+      ...interactionCallbacks,
+      ...scrollCallbacks,
+      ...focusCallbacks,
+      ...fullscreenCallbacks,
+      ...basicCallbacks
+    }),
+    [interactionCallbacks, scrollCallbacks, focusCallbacks, fullscreenCallbacks, basicCallbacks]
   );
 
   useInteractions({ id, interactions, triggers, callbacks, getAdditionalParams });

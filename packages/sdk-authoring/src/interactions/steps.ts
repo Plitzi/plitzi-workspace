@@ -317,6 +317,14 @@ export const delay = (time: number): StepSpec => utilityStep('delayTime', { time
 export const copyToClipboard = (text: string): StepSpec => utilityStep('copyToClipboard', { text });
 
 /**
+ * Shares an address — this page's when none is given — through the device's own sheet, or copies it where the browser
+ * has none. Named, it answers `{{ <id>.copied }}` and `{{ <id>.shared }}`: `named('sent', share({ title: '{{ page.title
+ * }}' }))`, then a toast on `sent.copied` says "Link copied" only when it was.
+ */
+export const share = (what: { url?: string; title?: string; text?: string } = {}): StepSpec =>
+  utilityStep('share', { ...what });
+
+/**
  * Calls a URL and puts the answer in the flow scope as `{{ <id>.response.status }}` and `{{ <id>.response.data }}`.
  *
  * `body` takes an object for the reason {@link runServerAction}'s `input` does, and this is the surface where it

@@ -149,7 +149,10 @@ the submit, and the browser says which.
 The toast carries no class of the space's, so this — not a `.Toastify__*` rule in `customCss` — is where it is
 dressed.
 
-Copy link: `copyToClipboard('{{ navigation.href }}')`, then the toast — it fails with no clipboard.
+Copy link: `copyToClipboard('{{ navigation.href }}')`, then the toast — it fails with no clipboard. Share:
+`named('sent', share({ title: 'Our launch' }))` opens the device's sheet for this page, or copies the address where
+there is none — a toast on `sent.copied` says "Link copied" only then. `fullscreen('map')` shows an element on the whole
+screen and back (`'enter'`, `'exit'` one way); where the browser cannot, the step fails into `onFailure`.
 
 ## Modals, dropdowns, tabs
 

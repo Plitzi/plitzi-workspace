@@ -13,4 +13,5 @@ export { navigationCallbacks } from '../sources/NavigationSource/callbacks';
 export { queriesCallbacks } from '../sources/QueriesSource/callbacks';
 export { stateCallbacks } from '../sources/StateSource/callbacks';
 export { copyToClipboardSpec } from '../utility/copyToClipboardSpec';
+export { shareSpec } from '../utility/shareSpec';
 export { webHookSpec } from '../utility/webHookSpec';

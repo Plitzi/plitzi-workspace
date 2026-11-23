@@ -6,6 +6,7 @@ import { AuthoringError } from '../schema/codes';
 
 import type { StepSpec } from '../schema';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { FullscreenMode } from '@plitzi/sdk-shared/authoring';
 import type { ScrollStepBehavior, ScrollStepPosition } from '@plitzi/sdk-shared/helpers';
 
 /**
@@ -404,6 +405,18 @@ export const focus = (target: string): StepSpec => ({
   title: 'Focus',
   on: target,
   params: {}
+});
+
+/**
+ * Shows an element on the whole screen — a map, a board, a gallery — and back: `fullscreen('map')` toggles it,
+ * `fullscreen('map', 'exit')` leaves. Where the browser cannot, the step fails and the flow's `onFailure` runs.
+ */
+export const fullscreen = (target: string, mode: FullscreenMode = 'toggle'): StepSpec => ({
+  type: 'callback',
+  action: 'fullscreen',
+  title: 'Fullscreen',
+  on: target,
+  params: { mode }
 });
 
 /**

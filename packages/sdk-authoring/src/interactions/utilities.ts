@@ -1,4 +1,4 @@
-import { copyToClipboardSpec, webHookSpec } from '@plitzi/sdk-interactions/declarations';
+import { copyToClipboardSpec, shareSpec, webHookSpec } from '@plitzi/sdk-interactions/declarations';
 import { reconcileParams } from '@plitzi/sdk-shared/authoring';
 
 import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring';
@@ -45,7 +45,8 @@ export const BUILTIN_UTILITIES: Record<string, BuiltinUtility> = {
   },
   // Gathered from the step itself rather than mirrored: the copy that used to be here had no cache and no refresh.
   webHook: webHookSpec,
-  copyToClipboard: copyToClipboardSpec
+  copyToClipboard: copyToClipboardSpec,
+  share: shareSpec
 };
 
 /** The built-in utility for an action, or undefined when the action is not a known built-in utility. */

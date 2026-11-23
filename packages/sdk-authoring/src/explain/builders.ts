@@ -27,6 +27,7 @@ export const BUILDER_SIGNATURES: Readonly<Record<string, string>> = {
   scrollTo: "scrollTo('row-id', { x: 'end' })",
   scrollIntoView: "scrollIntoView('element-id', { block: 'center' }?)",
   focus: "focus('field-id')",
+  fullscreen: "fullscreen('element-id', 'toggle' | 'enter' | 'exit'?)",
   carouselNext: "carouselNext('carousel-id', 'page')",
   carouselPrevious: "carouselPrevious('carousel-id', 'page')",
   carouselGoTo: "carouselGoTo('carousel-id', index)",

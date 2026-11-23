@@ -94,6 +94,31 @@ export const FOCUS_CALLBACKS = {
   focus: { title: 'Focus', type: 'callback', strictParams: true, params: {} }
 } satisfies Record<string, BuiltinElementCallback>;
 
+/** How a `fullscreen` step moves: in or out as it is (`toggle`), or one way. */
+export const FULLSCREEN_MODES = ['toggle', 'enter', 'exit'] as const;
+
+export type FullscreenMode = (typeof FULLSCREEN_MODES)[number];
+
+/**
+ * An element shown on the whole screen — a map, a board, a gallery, a video — and back. Its node names the element; a
+ * browser that cannot (an iPhone shows only a video so) fails the step, and the flow's `onFailure` says so.
+ */
+export const FULLSCREEN_CALLBACKS = {
+  fullscreen: {
+    title: 'Fullscreen',
+    type: 'callback',
+    strictParams: true,
+    params: {
+      mode: {
+        type: 'select',
+        description: '"toggle" shows it on the whole screen or, when it is already, back; "enter" and "exit" one way.',
+        default: 'toggle',
+        options: [...FULLSCREEN_MODES]
+      }
+    }
+  }
+} satisfies Record<string, BuiltinElementCallback>;
+
 /** The callbacks every element answers — `setState`, `scrollTo`, `scrollIntoView`, `focus`… — each with its params, as a flow's step calls them. */
 export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> = {
   setState: {
@@ -184,7 +209,8 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
     }
   },
   ...SCROLL_CALLBACKS,
-  ...FOCUS_CALLBACKS
+  ...FOCUS_CALLBACKS,
+  ...FULLSCREEN_CALLBACKS
 };
 
 /** The built-in element callback for an action, or undefined when the action is not a known built-in (an

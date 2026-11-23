@@ -31,3 +31,7 @@ left, and a new User category holds `avatar`, `account` and `signInForm`.
   its children and "Sign out". `signInForm` is the sign-in: one button through Plitzi's provider, an email and a password
   against a space's own (`basic`), the second factor's code when the account has one, and each refusal said for what it
   is. `account-sign-in-unreachable` warns of an `account` with nowhere to sign in on a `basic` space.
+- **`share` and `fullscreen` steps.** `share({ url?, title?, text? })` opens the device's sheet for an address (this
+  page's by default), or copies it where there is none, and answers `{ shared, copied }`. `fullscreen('element-id',
+  mode?)` shows any element on the whole screen and back (`toggle`, `enter`, `exit`), failing into `onFailure` where the
+  browser cannot.
