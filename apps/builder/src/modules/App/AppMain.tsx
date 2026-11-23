@@ -5,7 +5,8 @@ import { useCallback, useState, useMemo } from 'react';
 import { DevToolsContainer } from '@plitzi/sdk-dev-tools';
 import { GlobalSources } from '@plitzi/sdk-elements/dataSource';
 import { InteractionsSourcesProvider } from '@plitzi/sdk-interactions';
-import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import { keptOnReload } from '@pmodules/StateManager/helpers';
 import useSimulatedVisitor from '@pmodules/StateManager/hooks/useSimulatedVisitor';
 
 import AppContainer from './AppContainer';
@@ -59,6 +60,13 @@ const AppMain = ({
     setMotionPlaying(true);
     setMotionReplays(count => count + 1);
   }, []);
+  const [pageLoads, setPageLoads] = useState(0);
+  const [getRuntimeState, getSettings] = useBuilderStoreGetter(['runtime.state', 'schema.settings']);
+  const [, setRuntimeState] = useBuilderStore('runtime.state');
+  const reloadPage = useCallback(() => {
+    setRuntimeState(keptOnReload(getRuntimeState() ?? {}, getSettings()));
+    setPageLoads(count => count + 1);
+  }, [getRuntimeState, getSettings, setRuntimeState]);
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -84,6 +92,8 @@ const AppMain = ({
       setMotionPlaying,
       motionReplays,
       replayMotion,
+      pageLoads,
+      reloadPage,
       zoom,
       setZoom,
       displayMode,
@@ -105,6 +115,8 @@ const AppMain = ({
       setMotionPlaying,
       motionReplays,
       replayMotion,
+      pageLoads,
+      reloadPage,
       zoom,
       setZoom,
       displayMode,

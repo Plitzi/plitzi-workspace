@@ -209,3 +209,10 @@ export const preview = (value: unknown): string => {
 
   return text.length > 60 ? `${text.slice(0, 57)}…` : text;
 };
+
+/**
+ * The state a page starts again with when it is reloaded, as a browser's F5 does: what the space keeps between visits
+ * (`keepState` and its lists), nothing else — everything the page set for this visit alone is gone.
+ */
+export const keptOnReload = (state: Record<string, unknown>, settings: Schema['settings']): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(state).filter(([key]) => persistenceOf(settings, key).kept));

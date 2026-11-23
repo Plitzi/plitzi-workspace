@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  keptOnReload,
   parseTyped,
   persistenceOf,
   preview,
@@ -149,5 +150,21 @@ describe('a typed value', () => {
     expect(preview(undefined)).toBe('—');
     expect(preview('a')).toBe('"a"');
     expect(preview({ a: 'x'.repeat(80) }).endsWith('…')).toBe(true);
+  });
+});
+
+/** A space's settings saying only what keeps state: the rest of them is not what decides it. */
+const keeping = (kept: Partial<Schema['settings']>): Schema['settings'] => ({ customCss: '', ...kept });
+
+describe('a page reloaded', () => {
+  it('starts again with what the space keeps between visits, and nothing it set for this visit alone', () => {
+    const state = { basket: 3, step: 'pay', theme: 'dark' };
+
+    expect(keptOnReload(state, keeping({ keepState: true, transientState: ['step'] }))).toEqual({
+      basket: 3,
+      theme: 'dark'
+    });
+    expect(keptOnReload(state, keeping({ keepState: true, keptState: ['basket'] }))).toEqual({ basket: 3 });
+    expect(keptOnReload(state, keeping({}))).toEqual({});
   });
 });

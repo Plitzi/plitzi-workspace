@@ -22,6 +22,10 @@ export type AppContextValue = {
   motionReplays: number;
   /** Plays every motion on the canvas from its start, and leaves it playing. */
   replayMotion: () => void;
+  /** How many times the preview's page was reloaded, as a browser's F5: what the canvas is drawn anew on. */
+  pageLoads: number;
+  /** Reloads the page the preview shows: its state for this visit alone emptied, what it keeps kept, drawn anew. */
+  reloadPage: () => void;
   zoom: number;
   setZoom: Dispatch<SetStateAction<number>>;
   displayMode: DisplayMode;

@@ -13,10 +13,12 @@ import { getPageFullPath } from '@plitzi/sdk-navigation';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
+import AppContext from '@pmodules/App/AppContext';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
+import PreviewVisitor from './PreviewVisitor';
 
 import type { Element } from '@plitzi/sdk-shared';
 
@@ -43,6 +45,7 @@ const BuilderAreaHeader = ({
     'setSelected'
   ]);
   const { existsPopup, addPopup } = usePopup();
+  const { reloadPage } = use(AppContext);
   const { multiPagesMode, setMultiPagesMode, hasMultiPages, builderSetBaseContext, baseElementIdOriginal, mode } =
     use(BuilderContext);
   const {
@@ -160,6 +163,17 @@ const BuilderAreaHeader = ({
       <div title="Default Page" className={clsx({ 'text-primary-ui': defaultPage, 'text-ui-fg-subtle': !defaultPage })}>
         <Icon icon="fas fa-home" />
       </div>
+      {previewMode && (
+        <button
+          type="button"
+          title="Reload — as a browser's F5: what the page set for this visit is emptied, what it keeps stays, and it loads again"
+          aria-label="Reload the page"
+          className="text-ui-fg-subtle hover:text-ui-fg flex"
+          onClick={reloadPage}
+        >
+          <Icon icon="fa-solid fa-rotate-right" />
+        </button>
+      )}
       <Flex
         items="center"
         grow
@@ -175,6 +189,7 @@ const BuilderAreaHeader = ({
           onClick={handleClickTransform}
         />
       )}
+      <PreviewVisitor />
       <div title="Theme" className="flex cursor-pointer" onClick={handleClickTheme}>
         {themeArea === 'system' && <Icon icon="fa-solid fa-desktop" />}
         {themeArea === 'dark' && <Icon icon="fa-solid fa-sun" />}

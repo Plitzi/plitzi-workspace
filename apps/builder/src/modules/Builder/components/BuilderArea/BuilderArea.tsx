@@ -89,7 +89,7 @@ const BuilderArea = ({
   } = use(BuilderContext);
   // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
-  const { displayBorderComponents, displayGrid, motionPlaying, motionReplays, zoom, sdkIconsStylePath } =
+  const { displayBorderComponents, displayGrid, motionPlaying, motionReplays, pageLoads, zoom, sdkIconsStylePath } =
     use(AppContext);
   /**
    * The families the space declares, resolved for the canvas the same way the published page resolves them.
@@ -292,7 +292,9 @@ const BuilderArea = ({
                   iframeDOM={ref.current}
                   previewMode={previewMode}
                 >
-                  <SpaceContainer>
+                  {/* Keyed by the preview's reloads: a reload draws the space anew, as a browser's F5 loads the page
+                      again — its loads, its providers and its first flows run once more. */}
+                  <SpaceContainer key={pageLoads}>
                     {/* The canvas is a space drawn by the editor: one drawn inside it leaves the editor's document be. */}
                     <EnclosingSpaceContext value>
                       <PlitziProvider value={plitziContextValue}>

@@ -55,6 +55,11 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
 - **A rule written in code shows in the builder.** Every rule editor — a variant's, a flag's, a step's or a binding's
   `when` — drew an empty group for a rule with no ids, as any authored in code, by an agent or in a seed is: it is shown
   and edited now (`@plitzi/plitzi-ui` 1.6.41).
+- **The canvas says who the preview is shown to, and reloads like a browser.** Its address bar shows the simulated
+  visitor — language, device, first visit or returning, who is signed in, the date when one is chosen — and pressed,
+  the Visitor tab's choices, so a preview is tried without leaving it. In the preview a reload button loads the page
+  again as F5 does: what it set for this visit is emptied, what the space keeps between visits stays, and its loads and
+  first flows run once more.
 - **Layers says which variant is on screen.** Under a Variants element each variant reads which it is — A, B… or 1,
   2… — and the one the canvas shows while editing has its icon lit and "on screen" beside it; the others are faded.
 - **Element settings say what they are.** The Settings tab's duplicate "Settings" heading is now the element's name
