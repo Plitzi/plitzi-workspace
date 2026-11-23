@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 
 import { Audience } from './Audience';
 import ElementContext from '../../../Element/ElementContext';
@@ -69,6 +70,24 @@ describe('Audience', () => {
 
     drawn(desktop('fr'));
     expect(screen.getByText('For everyone')).toBeTruthy();
+  });
+
+  it('takes no room for a visitor no variant is for: an audience with no “everyone else”', () => {
+    const onlySome = { ...flat, rest: { ...flat.rest, attributes: { when: rule('visitor.language', 'de') } } };
+    const { container } = render(
+      <StoreProvider value={{ schema: { flat: onlySome }, visitor: desktop('fr'), render: {}, navigation: {} }}>
+        <ElementContext value={entry}>
+          <Audience>
+            <p key="phones">For phones</p>
+            <p key="spanish">Para ti</p>
+            <p key="rest">Für dich</p>
+          </Audience>
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    expect(container.textContent).toBe('');
+    expect(container.firstElementChild?.classList.contains(HIDDEN_CLASS)).toBe(true);
   });
 
   it('draws the variant its settings name while editing in the builder, and the simulated visitor’s in its preview', () => {

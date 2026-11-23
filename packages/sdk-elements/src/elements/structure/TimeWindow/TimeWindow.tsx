@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
+import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 import { isWindowOpen, nextWindowChange } from '@plitzi/sdk-shared/timeWindows';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -49,7 +50,9 @@ const TimeWindow = ({ ref, className = '', children, startsAt = '', endsAt = '' 
   const open = (builder && !previewMode) || isWindowOpen(now, startsAt, endsAt);
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__time-window', className)}>
+    // Closed, it keeps its node — to open in place when its start comes — but takes no room: a column's gap around an
+    // empty box spaced the offers beside it apart.
+    <RootElement ref={ref} className={clsx('plitzi-component__time-window', className, { [HIDDEN_CLASS]: !open })}>
       {open && children}
     </RootElement>
   );

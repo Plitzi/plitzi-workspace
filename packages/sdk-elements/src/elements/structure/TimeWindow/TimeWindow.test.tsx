@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 
 import { TimeWindow } from './TimeWindow';
 import ElementContext from '../../../Element/ElementContext';
@@ -41,8 +42,10 @@ describe('TimeWindow', () => {
     expect(screen.getByText('Sale on')).toBeTruthy();
     unmount();
 
-    drawn({ clock: { at: OPENS - 1000, simulated: true } });
+    const { container } = drawn({ clock: { at: OPENS - 1000, simulated: true } });
     expect(screen.queryByText('Sale on')).toBeNull();
+    // Closed, its node takes no room: an empty box in a column with a gap spaced what is beside it apart.
+    expect(container.firstElementChild?.classList.contains(HIDDEN_CLASS)).toBe(true);
   });
 
   it('always shows it while editing in the builder', () => {

@@ -2,6 +2,7 @@ import clsx from 'clsx';
 
 import { chooseAudienceVariant } from '@plitzi/sdk-shared/audiences';
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
+import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 
 import useAudienceScope from '../../../dataSource/useAudienceScope';
 import withElement from '../../../Element/hocs/withElement';
@@ -34,7 +35,8 @@ const Audience = ({ ref, className = '', children, builderVariant = 0 }: Audienc
   const variant = childOfItem(children, items[shown]);
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__audience', className)}>
+    // A visitor no variant is for (an audience with no "everyone else") sees nothing, and it takes no room.
+    <RootElement ref={ref} className={clsx('plitzi-component__audience', className, { [HIDDEN_CLASS]: !variant })}>
       {variant}
     </RootElement>
   );
