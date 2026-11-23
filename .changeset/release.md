@@ -52,6 +52,9 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   which a column's gap spaced the content around: now hidden as a hidden element is, their node kept to open in place.
 - **The builder goes back to the space it was opened for.** Its menu's **Back to the space** opens the space's console
   (`/spaces/<its address name>`), not the list of every space; **Domains and targets** names it the same way.
+- **A rule written in code shows in the builder.** Every rule editor — a variant's, a flag's, a step's or a binding's
+  `when` — drew an empty group for a rule with no ids, as any authored in code, by an agent or in a seed is: it is shown
+  and edited now (`@plitzi/plitzi-ui` 1.6.41).
 - **Layers says which variant is on screen.** Under a Variants element each variant reads which it is — A, B… or 1,
   2… — and the one the canvas shows while editing has its icon lit and "on screen" beside it; the others are faded.
 - **Element settings say what they are.** The Settings tab's duplicate "Settings" heading is now the element's name

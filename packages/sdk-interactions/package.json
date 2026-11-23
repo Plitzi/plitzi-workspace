@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.5.1",
-    "@plitzi/plitzi-ui": "^1.6.40",
+    "@plitzi/plitzi-ui": "^1.6.41",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"
