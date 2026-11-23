@@ -56,8 +56,11 @@ outlives its lifetime; a queue's jobs set aside are resumed at once.
   `when` — drew an empty group for a rule with no ids, as any authored in code, by an agent or in a seed is: it is shown
   and edited now (`@plitzi/plitzi-ui` 1.6.41).
 - **The canvas says who the preview is shown to, and reloads like a browser.** Its address bar shows the simulated
-  visitor — language, device, first visit or returning, who is signed in, the date when one is chosen — and pressed,
-  the Visitor tab's choices, so a preview is tried without leaving it. In the preview a reload button loads the page
+  visitor — language, device, first visit or returning, who is signed in, the date when one is chosen. Its choices are
+  one panel in tabs — Visitor, Variants (every Variants element of the page: by chance the variant picked, by rules
+  the one this visitor matches, each rule in words), Flags (each on or off for the visitor and why, forced Auto/On/Off),
+  Date (and every time window of the page, shown or hidden at it) and URL — docked right of the canvas where there is
+  room, under the address bar's button else. In the preview a reload button loads the page
   again as F5 does: what it set for this visit is emptied, what the space keeps between visits stays, and its loads and
   first flows run once more.
 - **Layers says which variant is on screen.** Under a Variants element each variant reads which it is — A, B… or 1,

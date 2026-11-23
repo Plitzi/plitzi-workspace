@@ -1,6 +1,6 @@
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
-import { use, useEffect, useMemo } from 'react';
+import { use, useEffect, useMemo, useRef } from 'react';
 
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { PLITZI_MARK_DATA_URL } from '@plitzi/sdk-shared/schema';
@@ -8,6 +8,9 @@ import AppContext from '@pmodules/App/AppContext';
 
 import BuilderPlugin from './BuilderPlugin';
 import BuilderArea from './components/BuilderArea';
+import PreviewDock from './components/BuilderArea/PreviewDock';
+import { PreviewDockContext } from './components/BuilderArea/previewDockRoom';
+import usePreviewDock from './components/BuilderArea/usePreviewDock';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 
 import type { BuilderContextValue } from '@plitzi/sdk-shared/builder';
@@ -28,6 +31,9 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '', ground }: Bui
   const { displayMode, previewMode, mobilePreview, debugMode } = use(AppContext);
   // Every hook before the empty state: the first page added, or the last removed, must not change how many ran.
   const empty = pages.length === 0 && mode === 'normal';
+  const canvasRow = useRef<HTMLDivElement>(null);
+  // The preview's visitor choices beside the canvas, where there is room for them; under the address bar's button else.
+  const docked = usePreviewDock(canvasRow, previewMode && mode === 'normal' && !multiPagesMode && !empty);
 
   useEffect(() => {
     if (empty || existsPopup('element-tools')) {
@@ -70,49 +76,53 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '', ground }: Bui
   }
 
   return (
-    <div
-      className={clsx(
-        'bg-ui-backdrop flex min-w-0 grow basis-0 overflow-auto bg-size-[16px_16px]',
-        'bg-[radial-gradient(circle_at_1px_1px,#d1d5db_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,#27272a_1px,transparent_0)]',
-        { 'justify-center': !multiPagesMode }
-      )}
-    >
-      {(!multiPagesMode || mode !== 'normal') && (
-        <BuilderArea
-          externalStyle={externalStyle}
-          customCss={customCss}
-          displayMode={displayMode}
-          previewMode={previewMode}
-          debugMode={debugMode}
-          ground={ground}
-        />
-      )}
-      {mobilePreview && mode === 'normal' && displayMode !== 'mobile' && !previewMode && (
-        <BuilderArea
-          className="basis-106.25"
-          externalStyle={externalStyle}
-          customCss={customCss}
-          mobilePreview
-          displayMode="mobile"
-          headerTitle="Mobile Preview"
-          previewMode
-          ground={ground}
-        />
-      )}
-      {multiPagesMode &&
-        hasMultiPages &&
-        pages.map(page => (
-          <BuilderContext key={page} value={contextsMemo[page]}>
-            <BuilderArea
-              externalStyle={externalStyle}
-              customCss={customCss}
-              displayMode={displayMode}
-              previewMode={previewMode}
-              debugMode={debugMode}
-            />
-          </BuilderContext>
-        ))}
-    </div>
+    <PreviewDockContext value={docked}>
+      <div
+        ref={canvasRow}
+        className={clsx(
+          'bg-ui-backdrop relative flex min-w-0 grow basis-0 overflow-auto bg-size-[16px_16px]',
+          'bg-[radial-gradient(circle_at_1px_1px,#d1d5db_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,#27272a_1px,transparent_0)]',
+          { 'justify-center': !multiPagesMode }
+        )}
+      >
+        {(!multiPagesMode || mode !== 'normal') && (
+          <BuilderArea
+            externalStyle={externalStyle}
+            customCss={customCss}
+            displayMode={displayMode}
+            previewMode={previewMode}
+            debugMode={debugMode}
+            ground={ground}
+          />
+        )}
+        {mobilePreview && mode === 'normal' && displayMode !== 'mobile' && !previewMode && (
+          <BuilderArea
+            className="basis-106.25"
+            externalStyle={externalStyle}
+            customCss={customCss}
+            mobilePreview
+            displayMode="mobile"
+            headerTitle="Mobile Preview"
+            previewMode
+            ground={ground}
+          />
+        )}
+        {multiPagesMode &&
+          hasMultiPages &&
+          pages.map(page => (
+            <BuilderContext key={page} value={contextsMemo[page]}>
+              <BuilderArea
+                externalStyle={externalStyle}
+                customCss={customCss}
+                displayMode={displayMode}
+                previewMode={previewMode}
+                debugMode={debugMode}
+              />
+            </BuilderContext>
+          ))}
+        {docked && <PreviewDock />}
+      </div>
+    </PreviewDockContext>
   );
 };
 

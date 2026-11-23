@@ -1,5 +1,6 @@
 export { default as GlobalSources } from './GlobalSources';
 export { default as getSourcesByElementId } from './getSourcesByElementId';
+export { default as useAudienceScope } from './useAudienceScope';
 export { default as useFlag } from './useFlag';
 export { default as PluginSource } from './PluginSource';
 export type { PluginSourceDeclaration, PluginSourceProps } from './PluginSource';

@@ -1,7 +1,11 @@
+import { use } from 'react';
+
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import HeaderPopover from '@pmodules/App/components/AppHeader/HeaderPopover';
-import VisitorTab from '@pmodules/StateManager/components/VisitorTab';
+import PreviewPanel from '@pmodules/StateManager/components/PreviewPanel';
 import useCanvasVisitor from '@pmodules/StateManager/hooks/useCanvasVisitor';
+
+import { PreviewDockContext } from './previewDockRoom';
 
 import type { VisitorDevice } from '@plitzi/sdk-shared/audiences';
 
@@ -30,6 +34,39 @@ const PreviewVisitor = () => {
   const [[visitor, simulatedAt]] = useBuilderStore(['visitor', 'simulatedAt']);
   const { visitor: who } = useCanvasVisitor();
   const person = who.kind === 'account' ? who.id : who.kind === 'guest' ? 'Guest' : 'You';
+  // Docked beside the canvas, its choices are already on screen: the bar only says who the visitor is.
+  const docked = use(PreviewDockContext);
+  const summary = (
+    <>
+      <span className="flex items-center gap-1">
+        <i className="fa-solid fa-language" />
+        {visitor?.language || '—'}
+      </span>
+      {visitor && <i className={DEVICE_ICON[visitor.device]} title={visitor.device} />}
+      <span>{visitor?.returning ? 'Returning' : 'First visit'}</span>
+      <span className="flex items-center gap-1">
+        <i className="fa-solid fa-user" />
+        {person}
+      </span>
+      {simulatedAt !== undefined && (
+        <span className="flex items-center gap-1">
+          <i className="fa-regular fa-calendar" />
+          {atWords(simulatedAt)}
+        </span>
+      )}
+    </>
+  );
+
+  if (docked) {
+    return (
+      <span
+        title="The visitor the preview shows the page to — its choices are beside the canvas"
+        className="text-ui-fg-muted flex h-7 shrink-0 items-center gap-2 px-2 text-xs"
+      >
+        {summary}
+      </span>
+    );
+  }
 
   return (
     <HeaderPopover
@@ -37,31 +74,11 @@ const PreviewVisitor = () => {
       label="The visitor the preview shows the page to"
       title="The visitor the preview shows the page to — press to change it"
       triggerClassName="border-ui-line text-ui-fg-muted hover:bg-ui-hover hover:text-ui-fg flex h-7 shrink-0 items-center gap-2 rounded-lg border px-2 text-xs"
-      trigger={
-        <>
-          <span className="flex items-center gap-1">
-            <i className="fa-solid fa-language" />
-            {visitor?.language || '—'}
-          </span>
-          {visitor && <i className={DEVICE_ICON[visitor.device]} title={visitor.device} />}
-          <span>{visitor?.returning ? 'Returning' : 'First visit'}</span>
-          <span className="flex items-center gap-1">
-            <i className="fa-solid fa-user" />
-            {person}
-          </span>
-          {simulatedAt !== undefined && (
-            <span className="flex items-center gap-1">
-              <i className="fa-regular fa-calendar" />
-              {atWords(simulatedAt)}
-            </span>
-          )}
-        </>
-      }
+      trigger={summary}
     >
       {() => (
-        <div className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto p-3">
-          <span className="text-ui-fg text-xs font-semibold">The visitor the preview shows the page to</span>
-          <VisitorTab />
+        <div className="flex max-h-[70vh] flex-col p-3">
+          <PreviewPanel />
         </div>
       )}
     </HeaderPopover>
