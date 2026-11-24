@@ -834,7 +834,7 @@ cannot be missing from the page. It refuses:
 - children on a type that holds none (`heading`, `text`, `image`, `formControl`…) — a heading made of parts is a
   `container` with an `h1`–`h6` tag, and a piece inline in it a `container` with `subType: 'span'`
 - a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `host`, `theme`, `flags`,
-  `experiments`, `computed`)
+  `experiments`, `time`, `computed`)
 - a `flag` that is not a flag name, a gate on a flag the space does not declare (`flag-undeclared`), a template reading
   one (`flag-unknown`), and a declaration whose `value` or a rule's is not `true` or `false`
 - a step target naming an element that is not there

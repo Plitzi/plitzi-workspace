@@ -39,3 +39,8 @@ left, and a new User category holds `avatar`, `account` and `signInForm`.
   CDN in front says it in (Cloudflare's, CloudFront's, Vercel's); empty with none, and with no server. It decides what a
   page shows, never who may see it — any visitor can send the header to a server with no CDN in front. The builder's
   Visitor tab simulates it, and a page reading it is kept apart by it in the page cache.
+- **`time`, the page's clock, minute by minute**: a global source — `{{ time.now }}` (the start of the minute, ms) and
+  `{{ time.today }}` (the day, UTC) — that moves on while a page is open, once a minute at most. `|ago` tells the time
+  by it, so "4 minutes ago" moves on by itself and the server and the browser say the same thing (within the minute it
+  is "now"). A space whose templates read it is drawn at the server's instant, as one with a time window is. `time` is
+  a global now: an element can no longer be called so.

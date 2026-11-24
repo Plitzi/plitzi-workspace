@@ -46,4 +46,9 @@ describe('templatePaths', () => {
       'row.id'
     ]);
   });
+
+  it('reads the page’s clock where a filter tells the time by it', () => {
+    expect(templatePaths('{{ post.at|ago }}').toSorted()).toEqual(['post.at', 'time.now']);
+    expect(templatePaths('{{ post.at|date("H:i") }}')).toEqual(['post.at']);
+  });
 });

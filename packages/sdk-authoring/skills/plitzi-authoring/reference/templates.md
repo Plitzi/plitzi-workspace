@@ -39,7 +39,7 @@ A text template feeding `items` is refused: the list would receive the array wri
 ## Naming sources inside a template
 
 Always the full name — the element's kind, an underscore, its id: `apiContainer_stats`, `list_rows`,
-`modalContainer_credits`. The globals (`state`, `auth`, `navigation`, `variables`, `host`, `theme`, `flags`, `experiments`, `computed`) are
+`modalContainer_credits`. The globals (`state`, `auth`, `navigation`, `variables`, `host`, `theme`, `flags`, `experiments`, `time`, `computed`) are
 named as themselves — `{{ flags.newCheckout }}` is `true` or `false`, see [feature flags](feature-flags.md). In a flow, an earlier step is read by the name given with `named('quote', …)`: `{{ quote.output.total }}`.
 
 An id with a hyphen is one name inside a template — `{{ apiContainer_tn-data.data.total }}` reads that provider. So
@@ -116,6 +116,8 @@ A lookup across two sources — a row joined to the stats around it:
 - **Now** is `'now'`: `{{ 'now'|date('F Y', 'UTC') }}` is the month the page is rendered in — on the server, then again
   in the browser, so keep it to the day or coarser (a minute can pass between the two). An age, a "this month", a
   countdown reads it instead of a date written into the page.
-- For "3 minutes ago" or "in 2 hours", `|ago` (`|ago('es')` in another language) — rendered on the server, then again
-  in the browser, so it holds to the minute. A transformer of a binding does the same: `dateConverter` with
+- For "3 minutes ago" or "in 2 hours", `|ago` (`|ago('es')` in another language) — told by the page's clock, so it
+  moves on each minute while the page is open, and the server and the browser say the same thing (within the minute it
+  is "now"). The clock itself is `time`: `{{ time.now }}` (the start of the minute, ms) and `{{ time.today }}` (the day,
+  UTC) — "open now", today's entries — and nothing reading it renders more than once a minute. A transformer of a binding does the same: `dateConverter` with
   `{ asAge: true }` (`isUnix: false` for an ISO string).

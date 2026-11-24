@@ -15,6 +15,7 @@ export const GLOBAL_SOURCES = [
   'theme',
   'flags',
   'experiments',
+  'time',
   'computed'
 ] as const;
 
@@ -46,7 +47,8 @@ export const GLOBAL_SOURCE_FIELDS = {
     pendingLocation: 'value'
   },
   auth: { isAuthenticated: 'value', status: 'value', accessToken: 'value', details: 'open' },
-  theme: { mode: 'value', resolved: 'value' }
+  theme: { mode: 'value', resolved: 'value' },
+  time: { now: 'value', today: 'value' }
 } as const satisfies Partial<Record<GlobalSource, Record<string, 'value' | 'open'>>>;
 
 export type ShapedGlobalSource = keyof typeof GLOBAL_SOURCE_FIELDS;

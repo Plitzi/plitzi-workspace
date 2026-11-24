@@ -11,6 +11,7 @@ import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';
 import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/react';
 
 import useExperiments from './useExperiments';
+import usePageClock, { dayOf } from './usePageClock';
 import useRegisterSource from './useRegisterSource';
 import useResolvedVariables from './useResolvedVariables';
 
@@ -183,6 +184,25 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   useRegisterSource({ id: 'global', source: 'experiments', name: 'Experiments', fields: experimentsFields });
   useCommonStoreSync('runtime.sources.experiments', experimentsValue);
   useCommonStoreSync('experiments.assigned', experimentsValue);
+
+  /**
+   * --- time
+   *
+   * The page's clock, minute by minute: `{{ time.now }}` (the start of the minute, ms) and `{{ time.today }}` (the
+   * day, UTC). What a page that stays open moves on with — "4 minutes ago" (`ago` reads it), "open now", today's
+   * entries — and once a minute at most, so nothing that reads it renders more often than that.
+   */
+  const now = usePageClock();
+  const timeValue = useMemo(() => ({ now, today: dayOf(now) }) satisfies ShapedGlobalValue<'time'>, [now]);
+  const timeFields = useCallback(
+    (): SourceField[] => [
+      { path: 'now', name: 'Now (the minute)' },
+      { path: 'today', name: 'Today (UTC)' }
+    ],
+    []
+  );
+  useRegisterSource({ id: 'global', source: 'time', name: 'Time', fields: timeFields });
+  useCommonStoreSync('runtime.sources.time', timeValue);
 
   // --- state (canonical runtime/application state) ---
   const [state] = useCommonStore('runtime.state');

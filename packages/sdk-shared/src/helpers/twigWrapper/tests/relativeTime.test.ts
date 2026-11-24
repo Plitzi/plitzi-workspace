@@ -25,6 +25,18 @@ describe('processTwig — a moment as how long ago, a length as a clock', () => 
     expect(processTwig('{{ at|ago }}', { at: 'not a date' })).toBe('');
   });
 
+  it('says it at the page’s clock when the scope holds one, all of its minute being "now"', () => {
+    const minute = now - 30_000;
+    const time = { now: minute };
+
+    // The clock is the start of the minute: a message of ten seconds ago is after it, and still "now", never ahead.
+    expect(processTwig('{{ at|ago }}', { at: now - 10_000, time })).toBe('now');
+    expect(processTwig('{{ at|ago }}', { at: minute - 4 * 60_000, time })).toBe('4 minutes ago');
+    // Read off the clock, not the machine's: the server and the browser say the same thing.
+    vi.setSystemTime(now + 3_600_000);
+    expect(processTwig('{{ at|ago }}', { at: minute - 4 * 60_000, time })).toBe('4 minutes ago');
+  });
+
   it('writes a length in seconds as a clock', () => {
     expect(processTwig('{{ seconds|duration }}', { seconds: 238 })).toBe('3:58');
     expect(processTwig('{{ seconds|duration }}', { seconds: 3723 })).toBe('1:02:03');

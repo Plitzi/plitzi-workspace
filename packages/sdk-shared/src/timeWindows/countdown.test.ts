@@ -6,8 +6,7 @@ import {
   countdownParts,
   countdownTarget,
   countdownUnits,
-  nextCountdownTick,
-  readsTheClock
+  nextCountdownTick
 } from './countdown';
 
 import type { CountdownUnit } from './countdown';
@@ -62,19 +61,5 @@ describe('a countdown', () => {
     expect(countdownTarget('', '2026-12-01T09:00:00Z')).toBe(DEC_1);
     expect(countdownTarget('tomorrow', '2026-12-01T09:00:00Z')).toBeUndefined();
     expect(countdownTarget('', '')).toBeUndefined();
-  });
-
-  it('makes a space read the clock, as a time window does — on its pages or in its components', () => {
-    const element = (type: string) => ({
-      id: type,
-      attributes: {},
-      definition: { rootId: type, label: type, type, styleSelectors: { base: '' } }
-    });
-
-    expect(readsTheClock({ flat: { c: element('countdown') } })).toBe(true);
-    expect(
-      readsTheClock({ flat: {}, components: { c: { id: 'c', rootId: 'w', flat: { w: element('timeWindow') } } } })
-    ).toBe(true);
-    expect(readsTheClock({ flat: { t: element('text') } })).toBe(false);
   });
 });

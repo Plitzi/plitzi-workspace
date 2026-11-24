@@ -199,6 +199,7 @@ describe('explain, of what a template reads and calls', () => {
     expect(explainText('theme')).toContain('theme — global source, read by every template by its name');
     expect(explainText('theme')).toContain('Fields: mode, resolved — no other');
     expect(explainText('host')).toContain('an application embedding the space');
+    expect(explainText('time')).toContain('Fields: now, today — no other');
     expect(explainList('source').map(entry => entry.name)).toEqual([
       'auth',
       'computed',
@@ -208,6 +209,7 @@ describe('explain, of what a template reads and calls', () => {
       'navigation',
       'state',
       'theme',
+      'time',
       'variables'
     ]);
   });

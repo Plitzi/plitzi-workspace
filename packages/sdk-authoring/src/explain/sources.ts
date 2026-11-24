@@ -37,6 +37,11 @@ export const SOURCE_DOCS: Record<GlobalSource, SourceDoc> = {
     summary: 'The colour scheme: the one chosen (light, dark or the system’s) and the one painted',
     example: "{{ theme.resolved == 'dark' }}"
   },
+  time: {
+    summary:
+      'The page’s clock, minute by minute: the start of the minute it is (now, ms) and the day (today, YYYY-MM-DD in UTC) — what moves a page on while it is open',
+    example: "{{ time.now|date('H:i') }} · {{ event.day == time.today ? 'Today' : event.day }}"
+  },
   flags: {
     summary: "The space's feature flags, on or off for this visitor",
     example: '{{ flags.newCheckout }}'

@@ -1,4 +1,8 @@
+import { TIME_NOW } from './filters/types';
 import { resolveTokens } from './TemplateCache';
+
+/** The filters that read the page's clock (`FilterEnv`): a template using one is redrawn as the clock moves on. */
+const CLOCK_FILTERS: ReadonlySet<string> = new Set(['ago']);
 
 /** Every static path a parsed template reads — `computed.tool`, `state.owned` — as the segments it names. */
 const collectPaths = (value: unknown, paths: Set<string>): void => {
@@ -12,6 +16,11 @@ const collectPaths = (value: unknown, paths: Set<string>): void => {
 
   if (typeof value !== 'object' || value === null) {
     return;
+  }
+
+  // A filter that reads the page's clock reads `time.now`, as a path would: `ago` moves on with it.
+  if ('name' in value && CLOCK_FILTERS.has(String(value.name)) && 'args' in value) {
+    paths.add(TIME_NOW);
   }
 
   if ('type' in value && value.type === 'path' && 'segments' in value && Array.isArray(value.segments)) {

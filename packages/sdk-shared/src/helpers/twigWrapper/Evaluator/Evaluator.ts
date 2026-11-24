@@ -1,9 +1,11 @@
 import { isTruthy, order, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
 import { ARROW_PARAMS, filters, isRawMarker, unwrapRaw } from '../filters/filters';
+import { filterEnvOf } from '../filters/types';
 import { serializeValue } from '../processTwig/helpers';
 
 import type { ASTNode, Expression, FilterCall, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
 import type { ArrowCallback } from '../filters/filters';
+import type { FilterEnv } from '../filters/types';
 
 /** The Twig tests `is` understands. Anything else on the right of `is` is a value to compare with, as before. */
 const TESTS: Record<string, ((value: unknown) => boolean) | undefined> = {
@@ -116,6 +118,8 @@ class Evaluator {
   private escaping = false;
   private breakFlag = false;
   private continueFlag = false;
+  /** The instant the render happens at, read once — on the first filter that asks — so every one of it agrees. */
+  private env: FilterEnv | undefined;
   hasSet = false;
 
   constructor(context: Record<string, unknown>, keepEmptyTokens: KeepEmptyTokens = false, jsonStrings = false) {
@@ -358,7 +362,8 @@ class Evaluator {
       const fn = filters[call.name];
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- a filter named in a template may not exist: the Record's index type says it always does
       if (fn !== undefined) {
-        value = fn(value, call.args.length === 0 ? NO_ARGS : this.evalArgs(call.args));
+        this.env ??= filterEnvOf(this.variables);
+        value = fn(value, call.args.length === 0 ? NO_ARGS : this.evalArgs(call.args), this.env);
       }
     }
 

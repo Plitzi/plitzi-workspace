@@ -32,6 +32,8 @@ export type RuntimeSourceValues = {
   // The space's theme, published by `GlobalSources` from the theme store. `resolved` is always a colour, `mode` is what
   // was chosen, `system` included — so `{{ theme.resolved }}` is the one a URL or a `when` rule wants.
   theme?: { mode: Theme; resolved: ColorScheme };
+  // The page's clock, minute by minute (`usePageClock`): the start of the minute, and its day in UTC.
+  time?: { now: number; today: string };
   // The space's feature flags as they resolved for this render, by name — what `{{ flags.<name> }}` reads.
   flags?: Record<string, boolean>;
   // The variant each of the space's A/B tests shows this visitor, by experiment — what `{{ experiments.<name> }}` reads.

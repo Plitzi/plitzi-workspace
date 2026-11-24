@@ -210,7 +210,7 @@ export const FILTER_DOCS: Record<string, FilterDoc> = {
   ago: {
     signature: 'ago(locale?)',
     summary:
-      'Relative time: how long ago a moment was, or how far ahead, in words — "4 minutes ago", "in 3 hours", "now" — at the render’s moment, on the server and again in the browser',
+      'Relative time: how long ago a moment was, or how far ahead, in words — "4 minutes ago", "in 3 hours", "now" — at the page’s clock (time.now), moving on each minute while the page is open',
     example: '{{ played.endedAt|ago }} · {{ post.at|ago("es") }}'
   },
   duration: {

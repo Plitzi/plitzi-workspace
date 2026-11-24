@@ -71,7 +71,8 @@ const BUDGET = {
   // 157: whether a space shows things by the time (`timeWindows`), drawn at the instant the page renders.
   // 159: the Variants element's own (`variants`): the experiments and the audiences are read off its variants.
   // 160: the countdown's (`timeWindows/countdown`), whose type makes a space read the clock as a time window does.
-  '@plitzi/sdk-shared': 160,
+  // 161: whether a space reads the page's clock (`timeWindows/clock`), its templates' `time.*` and `ago` among it.
+  '@plitzi/sdk-shared': 161,
   '@plitzi/nexus': 0,
   '@plitzi/plitzi-ui': 0,
   '@plitzi/plitzi-sdk': 1,

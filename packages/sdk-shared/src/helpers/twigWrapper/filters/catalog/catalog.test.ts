@@ -12,7 +12,7 @@ describe('the template filters, documented', () => {
   it('reads “now” as the moment the page is rendered', () => {
     const year = String(new Date().getUTCFullYear());
 
-    expect(filters.date('now', ['Y', 'UTC'])).toBe(year);
+    expect(filters.date('now', ['Y', 'UTC'], { now: Date.now(), grain: 1 })).toBe(year);
   });
 
   // `plitzi explain max` answered nothing — a function was known only to the evaluator and the check.

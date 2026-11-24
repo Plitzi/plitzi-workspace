@@ -1,6 +1,4 @@
-import { instantOf, TIME_WINDOW_TYPE } from './timeWindows';
-
-import type { Schema } from '../types';
+import { instantOf } from './timeWindows';
 
 /** The element that says how long is left until an instant. */
 export const COUNTDOWN_TYPE = 'countdown';
@@ -123,12 +121,3 @@ export const countdownLabel = (
 /** The instant a countdown counts to: its own `to`, or the end of the time window around it. */
 export const countdownTarget = (to: unknown, windowEnd: unknown): number | undefined =>
   instantOf(to) ?? (to === undefined || to === '' ? instantOf(windowEnd) : undefined);
-
-/** The types whose pages are drawn at an instant the browser hydrates at: what shows, or says, by the time. */
-const CLOCK_TYPES: ReadonlySet<string> = new Set([TIME_WINDOW_TYPE, COUNTDOWN_TYPE]);
-
-/** Whether a space shows or says anything by the time, on its pages or in its components. */
-export const readsTheClock = (schema: Pick<Schema, 'flat'> & Partial<Pick<Schema, 'components'>>): boolean =>
-  [schema.flat, ...Object.values(schema.components ?? {}).map(component => component.flat)].some(flat =>
-    Object.values(flat).some(element => CLOCK_TYPES.has(element.definition.type))
-  );

@@ -89,16 +89,18 @@ export const dateFilters: Record<string, TwigFilter> = {
   },
 
   // `| ago(locale?)` — how long ago a moment was, or how far ahead it is, in words: "4 minutes ago", "in 3 hours",
-  // "now" — at the render's moment, on the server then again in the browser (a page that stays open is not redrawn
-  // as time passes). The unit is the largest that is whole; the locale `en` when not named. A run's agents wrote a
-  // plugin for "Ended 4 min ago": every page with a history, a feed or a chat needs it.
-  ago: (value, args) => {
+  // "now" — at the page's clock (`time.now`, which a template with `ago` reads: it moves on each minute while the page
+  // is open, and the server and the browser agree on it), so anything within the minute is "now". The unit is the
+  // largest that is whole; the locale `en` when not named. A run's agents wrote a plugin for "Ended 4 min ago": every
+  // page with a history, a feed or a chat needs it.
+  ago: (value, args, env) => {
     const date = toDate(value);
     if (Number.isNaN(date.getTime())) {
       return '';
     }
 
-    const seconds = Math.round((date.getTime() - Date.now()) / 1000);
+    const exact = (date.getTime() - env.now) / 1000;
+    const seconds = Math.abs(exact) * 1000 < env.grain ? 0 : Math.round(exact);
     const units: [Intl.RelativeTimeFormatUnit, number][] = [
       ['year', 31_536_000],
       ['month', 2_592_000],
