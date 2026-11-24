@@ -463,6 +463,12 @@ After finishing any set of code changes, always run:
 - **sdk-shared's server folders reach no React, React DOM, nexus or plitzi-ui** (`src/serverSafe.test.ts` lists them):
   they are optional peers of it, which a server does not install. What draws or holds a store goes in a `react` folder
   of its own (`<area>/react`, `react`, `store`), never beside what a server imports from the same barrel.
+- **A built-in element's type is a name plugins share**: a new one takes it from any plugin of that type, whose
+  documents the linter then reads as the built-in's (Pizarra's own `countdown` met the core's, and its seed was renamed
+  `sessionTimer`). Before naming a built-in, grep the seeds' and examples' plugins for the type.
+- **`light-dark()` needs a declared `color-scheme`**: the build turns each into custom properties that only a declared
+  scheme switches on (`plitzi-sdk.scss` declares `:root` light, then the classes and the dark media query). A
+  default written with it and checked only in dark is checked half: `colorScheme.test.ts` (apps/sdk) holds the base.
 - **Runtime contexts use `sharedContext(name, default)`** (`@plitzi/sdk-shared/react`), never
   `createContext`: the builder bundles its own runtime while remote plugins import `@plitzi/plitzi-sdk` through the
   import map, and only a shared registry lets both see the same context.
