@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-schema",
-  "version": "0.39.12",
+  "version": "0.39.13",
   "license": "AGPL-3.0",
   "files": [
     "dist"
