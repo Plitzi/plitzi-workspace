@@ -355,6 +355,8 @@ describe('processSelector / the style language', () => {
       'chevron'
     );
 
-    expect(cache).toBe('.chevron{:where(:is([aria-expanded="true"],:where([open]>summary))) > &{rotate:180deg;}:where(:hover) > &{opacity:1;}}');
+    expect(cache).toBe(
+      '.chevron{:where(:is([aria-expanded="true"],:where([open]>summary))) > &{rotate:180deg;}:where(:hover) > &{opacity:1;}}'
+    );
   });
 });

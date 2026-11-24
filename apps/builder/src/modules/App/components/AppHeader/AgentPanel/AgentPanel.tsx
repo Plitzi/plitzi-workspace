@@ -140,7 +140,7 @@ const AgentPanel = (space: AgentSpace) => {
   return (
     <div className="flex flex-col gap-4 px-4 pt-4 pb-4">
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-violet-500 to-fuchsia-500 text-white">
           <i className="fa-solid fa-wand-magic-sparkles text-sm" />
         </span>
         <div className="flex min-w-0 flex-col">

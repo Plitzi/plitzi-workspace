@@ -99,7 +99,11 @@ describe('the elements panel’s catalog', () => {
       variant: definitionOf('variantItem', { label: 'Variant', category: 'structure', ancestorType: 'variants' }),
       variants: definitionOf('variants', { label: 'Variants', category: 'structure' }),
       carousel: definitionOf('carousel', { label: 'Carousel', category: 'structure' }),
-      track: definitionOf('carouselTrack', { label: 'Carousel Track', category: 'structure', ancestorType: 'carousel' }),
+      track: definitionOf('carouselTrack', {
+        label: 'Carousel Track',
+        category: 'structure',
+        ancestorType: 'carousel'
+      }),
       wide: definitionOf('wide', { label: 'Banner', category: 'structure' })
     };
     const [[, listed]] = definitionsByCategory(structure, '');
