@@ -27,8 +27,9 @@ export const ANSWER_BUDGETS = {
   'plitzi_look html': 29150,
   // The words beside a picture; the picture rides to the model as an image, priced by its size.
   'plitzi_look image': 30,
-  // The auth space's journeys, listed with how each stands: 2,471 tokens.
-  plitzi_test: 2720
+  // The auth space's journeys and its unit tests — the providers a deployment shows (11-13) — listed with how each
+  // stands: 3,083 tokens.
+  plitzi_test: 3390
 } as const;
 
 /** The answers this package cannot make alone: a host measures them, on its own adapters. */
