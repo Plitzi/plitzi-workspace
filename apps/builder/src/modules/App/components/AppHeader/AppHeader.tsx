@@ -18,6 +18,7 @@ import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
 import useSpaceEntitlements, { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
+import ClaudePanel from './ClaudePanel';
 import { consoleUrlOf } from './consoleUrl';
 import DisplayModeButtons from './DisplayModeButtons';
 import HeaderMenu from './HeaderMenu';
@@ -49,7 +50,7 @@ const AppHeader = () => {
   const { theme, setTheme } = useTheme();
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const { mutate, webId } = useBuilderNetwork();
+  const { mutate, webId, server } = useBuilderNetwork();
   const draft = useDraftStatus();
   const [collaborators] = useBuilderStore('collaboration.collaborators');
   const { refresh: refreshIssues } = useSpaceIssues();
@@ -193,7 +194,7 @@ const AppHeader = () => {
 
     return 'https://plitzi.com';
   }, []);
-  const [permanentUrl] = useBuilderStore('schema.definition.permanentUrl');
+  const [[permanentUrl, spaceName]] = useBuilderStore(['schema.definition.permanentUrl', 'schema.definition.name']);
   const consoleUrl = consoleUrlOf(origin, permanentUrl, webId);
 
   return (
@@ -287,6 +288,27 @@ const AppHeader = () => {
           })}
         </div>
         <PreviewModeButtons />
+        {/* Claude on this space: as a collaborator over the MCP, or on the person's computer with the CLI. */}
+        {may('spaceUpdate') && permanentUrl && (
+          <HeaderPopover
+            id="header-claude"
+            label="Work on this space with Claude"
+            title="Claude: as a collaborator here, or on your computer with the CLI — the steps and what to tell it"
+            align="end"
+            wide
+            triggerClassName="border-ui-line-strong text-ui-fg hover:bg-ui-hover focus-visible:ring-primary-500 aria-expanded:bg-ui-hover flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
+            trigger={
+              <>
+                <i className="fa-solid fa-wand-magic-sparkles text-xs" />
+                <span className="hidden xl:inline">Claude</span>
+              </>
+            }
+          >
+            {() => (
+              <ClaudePanel name={spaceName || permanentUrl} permanentUrl={permanentUrl} mcpServer={server.mcpServer} />
+            )}
+          </HeaderPopover>
+        )}
         {may('spaceCode') && <RuntimeIdleNotice />}
         <IssuesButton />
         {/* The account, as one group: the space's quota, its plan and the person's role on it. */}

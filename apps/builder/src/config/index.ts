@@ -14,6 +14,7 @@ export const getEnvironmentServer = (server?: Partial<Server>): Server => {
     fontsBaseUrl: '',
     websocketServer: 'wss://server.plitzi.com',
     subscriptionServer: 'wss://server.plitzi.com/subscriptions',
+    mcpServer: 'https://mcp.plitzi.com/mcp',
     // Others
     location: undefined,
     ...server

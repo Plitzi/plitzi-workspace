@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useId } from 'react';
 
 import useAnchoredOverlay from './useAnchoredOverlay';
@@ -13,6 +14,8 @@ export type HeaderPopoverProps = {
   trigger: ReactNode;
   triggerClassName: string;
   align?: 'start' | 'end';
+  /** A panel that holds lines to read whole — commands, prompts: wider, and scrolling within the window's height. */
+  wide?: boolean;
   /** The panel's contents, given the way to close it. */
   children: (close: () => void) => ReactNode;
 };
@@ -28,6 +31,7 @@ const HeaderPopover = ({
   trigger,
   triggerClassName,
   align = 'end',
+  wide = false,
   children
 }: HeaderPopoverProps) => {
   const { open, close, toggle, place, buttonRef, rootRef, panelRef } = useAnchoredOverlay(
@@ -59,7 +63,12 @@ const HeaderPopover = ({
           role="dialog"
           aria-label={label}
           style={place}
-          className="border-ui-line bg-ui-panel text-ui-fg fixed z-[700] flex w-[min(360px,calc(100vw-16px))] flex-col rounded-xl border shadow-xl"
+          className={clsx(
+            'border-ui-line bg-ui-panel text-ui-fg fixed z-[700] flex flex-col rounded-xl border shadow-xl',
+            wide
+              ? 'max-h-[calc(100vh-64px)] w-[min(440px,calc(100vw-16px))] overflow-y-auto'
+              : 'w-[min(360px,calc(100vw-16px))]'
+          )}
         >
           {children(close)}
         </div>

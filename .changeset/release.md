@@ -49,3 +49,8 @@ left, and a new User category holds `avatar`, `account` and `signInForm`.
   with no background there.
 - **An image (and an avatar) that failed before the page hydrated shows its fallback**: its `error` fired with nobody
   listening, and the browser's broken image stayed.
+- **The builder's Claude panel**: a Claude button in its header — on the space as a collaborator over the MCP
+  (`claude mcp add …`, or the Claude app's connector), or on the person's computer with the CLI (`plitzi create --from`,
+  `space pull`, `space push`, run with `npm run start:dev`) — with this space's address written in and what to tell
+  Claude as the work goes, each a line to copy. `Server.mcpServer` says where the deployment's MCP answers; none, and
+  the panel offers the computer alone.

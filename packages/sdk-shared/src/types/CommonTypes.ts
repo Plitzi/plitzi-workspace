@@ -35,6 +35,11 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
   scriptPolicy?: 'report-only' | 'enforce';
   websocketServer: string;
   subscriptionServer: string;
+  /**
+   * Where this deployment's MCP server answers, `/mcp` included: what an agent is added with to work on a space as a
+   * collaborator (the builder's Claude panel). Absent where the host runs none.
+   */
+  mcpServer?: string;
   location?: Location;
   authenticated?: boolean;
   skipAuth?: boolean;
