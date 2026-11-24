@@ -6,10 +6,10 @@ $danger: light-dark(oklch(0.505 0.213 27.518), oklch(0.704 0.191 22.216));
 
 @mixin styles {
   .plitzi-component__sign-in-form {
+    max-width: 360px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-width: 360px;
   }
 
   .plitzi-component__sign-in-form-fields {
@@ -25,38 +25,38 @@ $danger: light-dark(oklch(0.505 0.213 27.518), oklch(0.704 0.191 22.216));
   }
 
   .plitzi-component__sign-in-form-label {
-    font-size: 0.875em;
     font-weight: 500;
+    font-size: 0.875em;
   }
 
   .plitzi-component__sign-in-form-input {
-    padding-top: 8px;
     padding-right: 10px;
     padding-bottom: 8px;
     padding-left: 10px;
+    padding-top: 8px;
     border: 1px solid $line;
-    border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-top-left-radius: 8px;
     background-color: $surface;
     color: inherit;
     font: inherit;
   }
 
   .plitzi-component__sign-in-form-submit {
-    padding-top: 10px;
     padding-right: 14px;
     padding-bottom: 10px;
     padding-left: 14px;
-    border-top-width: 0px;
+    padding-top: 10px;
     border-right-width: 0px;
-    border-bottom-width: 0px;
-    border-left-width: 0px;
-    border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    border-bottom-left-radius: 8px;
+    border-bottom-width: 0px;
     border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-top-left-radius: 8px;
+    border-left-width: 0px;
+    border-top-width: 0px;
     background-color: $ink;
     color: $ink-on-ink;
     font: inherit;

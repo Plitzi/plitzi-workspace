@@ -15,10 +15,10 @@
   }
 
   .plitzi-component__disclosure-marker {
-    flex-shrink: 0;
-    margin-left: auto;
-    width: 0.45em;
     height: 0.45em;
+    width: 0.45em;
+    margin-left: auto;
+    flex-shrink: 0;
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
     transform: rotate(45deg);
