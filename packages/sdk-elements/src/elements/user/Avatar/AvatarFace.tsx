@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { hueOf, initialsOf } from './faces';
 
@@ -19,10 +19,20 @@ export type AvatarFaceProps = {
 const AvatarFace = ({ src = '', name = '', imageClassName }: AvatarFaceProps) => {
   const [failed, setFailed] = useState<string | undefined>(undefined);
   const initials = initialsOf(name);
+  // A picture that failed before the page hydrated fired its `error` with nobody listening: it is read off the node.
+  const seen = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (img?.complete && img.naturalWidth === 0 && src) {
+        setFailed(src);
+      }
+    },
+    [src]
+  );
 
   if (src && failed !== src) {
     return (
       <img
+        ref={seen}
         className={clsx('plitzi-component__avatar-image', imageClassName)}
         src={src}
         alt=""

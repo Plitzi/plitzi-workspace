@@ -47,6 +47,18 @@
    * It is also what makes `light-dark()` work below, which is how the element defaults follow a theme without the
    * SDK inventing a palette for somebody else's site.
    */
+
+  /**
+   * A document with no class is a light one until the media query below says the machine is dark. Declared, not left
+   * `normal`: the build turns every `light-dark()` into a pair of custom properties that only a declared scheme
+   * switches on, and with none in a light page neither was — the element defaults' `light-dark()` backgrounds and
+   * colours (a sign-in button, an avatar, a dropdown's popup) were drawn with nothing at all. First, so `.dark`,
+   * `.light` and the media query after it win where they apply.
+   */
+  :root {
+    color-scheme: light;
+  }
+
   .dark {
     color-scheme: dark;
   }
@@ -348,7 +360,6 @@
       }
     }
   }
-
 
   @keyframes pulse {
     0% {

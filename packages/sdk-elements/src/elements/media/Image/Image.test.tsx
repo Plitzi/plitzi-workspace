@@ -120,6 +120,21 @@ describe('Image Tests', () => {
     expect(image.getAttribute('src')).toBe('https://cdn.test/portrait.png');
   });
 
+  it('sees a picture that failed before the page hydrated, whose error nobody heard', () => {
+    // As the browser has it: loaded as far as it will, and nothing to draw.
+    const complete = vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(true);
+    const width = vi.spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get').mockReturnValue(0);
+    const { container } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Image src="https://cdn.test/gone.png" fallbackSrc="https://cdn.test/no-photo.png" />
+      </ElementContext>
+    );
+
+    expect(container.querySelector('img')?.getAttribute('data-plitzi-failed')).toBe('https://cdn.test/gone.png');
+    complete.mockRestore();
+    width.mockRestore();
+  });
+
   it('offers another site’s picture at the sizes the page server makes, when it makes them', () => {
     published.endpoint = '/_plitzi/img';
     const { container } = render(

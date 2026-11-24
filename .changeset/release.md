@@ -44,3 +44,8 @@ left, and a new User category holds `avatar`, `account` and `signInForm`.
   by it, so "4 minutes ago" moves on by itself and the server and the browser say the same thing (within the minute it
   is "now"). A space whose templates read it is drawn at the server's instant, as one with a time window is. `time` is
   a global now: an element can no longer be called so.
+- **A light page with no theme class draws the element defaults' `light-dark()` colours**: the SDK base declares it
+  light, so the build's light/dark properties switch on — a dropdown's popup, a sign-in button, an avatar were drawn
+  with no background there.
+- **An image (and an avatar) that failed before the page hydrated shows its fallback**: its `error` fired with nobody
+  listening, and the browser's broken image stayed.

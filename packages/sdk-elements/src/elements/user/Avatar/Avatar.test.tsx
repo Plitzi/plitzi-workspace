@@ -42,6 +42,15 @@ describe('Avatar', () => {
     expect(box?.querySelector('img')).toBeNull();
   });
 
+  it('shows the initials for a picture that failed before the page hydrated', () => {
+    const complete = vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(true);
+    const width = vi.spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get').mockReturnValue(0);
+
+    expect(drawn({ src: 'https://cdn.test/gone.jpg', name: 'Grace Hopper' })?.textContent).toBe('GH');
+    complete.mockRestore();
+    width.mockRestore();
+  });
+
   it('is said by its name, on a colour of its own — and not at all when decorative', () => {
     const box = drawn({ name: 'Ada Lovelace' });
 

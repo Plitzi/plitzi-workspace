@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { imageSrcSet, imageUrl, isResizableImage } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
@@ -104,6 +104,18 @@ const Image = ({
   const broken = Boolean(srcProp) && failed.includes(srcProp ?? '');
   const ownPlaceholder = src === fallback;
   const handleError = useCallback(() => setFailed(was => (was.includes(src) ? was : [...was, src])), [src]);
+
+  // A picture that failed before the page hydrated fired its `error` with nobody listening — a server-drawn page whose
+  // address is gone showed the browser's broken image for good: it is read off the node once there is one.
+  const ownRef = useRef<HTMLElement | null>(null);
+  const nodeRef = ref ?? ownRef;
+  useEffect(() => {
+    const node = nodeRef.current;
+    const img = node instanceof HTMLImageElement ? node : node?.querySelector('img');
+    if (img?.complete && img.naturalWidth === 0 && !ownPlaceholder) {
+      handleError();
+    }
+  }, [nodeRef, handleError, ownPlaceholder]);
   // Failed is said with its source; nothing given at all — a binding that read nothing — as empty (`emptyMark`).
   const marker = broken ? { 'data-plitzi-failed': srcProp } : emptyMark(previewMode === true && !srcProp);
 
@@ -121,7 +133,7 @@ const Image = ({
 
   if (!previewMode) {
     return (
-      <RootElement ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
+      <RootElement ref={nodeRef} className={clsx('plitzi-component__image image--edit-mode', className)}>
         <img
           draggable={false}
           src={src}
@@ -139,7 +151,7 @@ const Image = ({
     <RootElement
       tag="img"
       draggable={false}
-      ref={ref}
+      ref={nodeRef}
       className={clsx('plitzi-component__image', className)}
       {...resized}
       {...dimensions}
