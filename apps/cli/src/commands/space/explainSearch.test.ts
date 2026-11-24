@@ -37,7 +37,8 @@ const ASKED: [string, RegExp][] = [
   ['function task', /taskAction|functions\.md/],
   ['descendant nested selectors', /ancestor/],
   ['accordion collapse expand', /accordion/],
-  ['details summary disclosure', /accordion/],
+  // The browser's own <details>, an element of its own now (`disclosure`) — the accordion's recipe is made of it.
+  ['details summary disclosure', /^disclosure$|accordion/],
   ['repeat list each item', /^list$/],
   ['escape key close', /^onKey$/],
   ['hash link current page', /link-to-a-section|anchor/],
