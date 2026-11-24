@@ -18,7 +18,7 @@ import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
 import useSpaceEntitlements, { useSpaceAccess } from '@pmodules/Space/hooks/useSpaceEntitlements';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
-import ClaudePanel from './ClaudePanel';
+import AgentPanel from './AgentPanel';
 import { consoleUrlOf } from './consoleUrl';
 import DisplayModeButtons from './DisplayModeButtons';
 import HeaderMenu from './HeaderMenu';
@@ -288,24 +288,24 @@ const AppHeader = () => {
           })}
         </div>
         <PreviewModeButtons />
-        {/* Claude on this space: as a collaborator over the MCP, or on the person's computer with the CLI. */}
+        {/* An AI agent on this space: as a collaborator over the MCP, or on the person's computer with the CLI. */}
         {may('spaceUpdate') && permanentUrl && (
           <HeaderPopover
-            id="header-claude"
-            label="Work on this space with Claude"
-            title="Claude: as a collaborator here, or on your computer with the CLI — the steps and what to tell it"
+            id="header-agent"
+            label="Work on this space with an AI agent"
+            title="An AI agent — Claude Code, OpenCode, Gemini CLI, Codex — as a collaborator here, or on your computer with the CLI"
             align="end"
             wide
             triggerClassName="border-ui-line-strong text-ui-fg hover:bg-ui-hover focus-visible:ring-primary-500 aria-expanded:bg-ui-hover flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
             trigger={
               <>
                 <i className="fa-solid fa-wand-magic-sparkles text-xs" />
-                <span className="hidden xl:inline">Claude</span>
+                <span className="hidden xl:inline">Agent</span>
               </>
             }
           >
             {() => (
-              <ClaudePanel name={spaceName || permanentUrl} permanentUrl={permanentUrl} mcpServer={server.mcpServer} />
+              <AgentPanel name={spaceName || permanentUrl} permanentUrl={permanentUrl} mcpServer={server.mcpServer} />
             )}
           </HeaderPopover>
         )}

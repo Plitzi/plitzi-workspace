@@ -49,8 +49,10 @@ left, and a new User category holds `avatar`, `account` and `signInForm`.
   with no background there.
 - **An image (and an avatar) that failed before the page hydrated shows its fallback**: its `error` fired with nobody
   listening, and the browser's broken image stayed.
-- **The builder's Claude panel**: a Claude button in its header — on the space as a collaborator over the MCP
-  (`claude mcp add …`, or the Claude app's connector), or on the person's computer with the CLI (`plitzi create --from`,
-  `space pull`, `space push`, run with `npm run start:dev`) — with this space's address written in and what to tell
-  Claude as the work goes, each a line to copy. `Server.mcpServer` says where the deployment's MCP answers; none, and
+- **The builder's Agent panel**: an Agent button in its header for Claude Code, OpenCode, Gemini CLI or Codex — on the
+  space as a collaborator over the MCP (each agent's own way of adding it, then signing in and choosing this space,
+  which the agent sees alone and none of until chosen; the Claude app's connector beside Claude Code), or on the
+  person's computer with the CLI (`plitzi create --from`, `space pull`, `space push`, run with `npm run start:dev`) —
+  with this space's address written in and what to tell the agent as the work goes, each a line to copy. The agent
+  and the way chosen are kept for the next time. `Server.mcpServer` says where the deployment's MCP answers; none, and
   the panel offers the computer alone.
