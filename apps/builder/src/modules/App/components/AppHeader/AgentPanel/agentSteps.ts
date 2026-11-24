@@ -89,7 +89,9 @@ export const agentSteps = (
               label: `Add Plitzi to ${agent.label}`,
               text: agent.add(mcpServer),
               kind: 'command',
-              note: 'Once, for every folder.'
+              // Claude Code and Gemini CLI add it for the user (`--scope user`), Codex keeps it in its one config: every
+              // folder sees it. OpenCode's own scope is its to say.
+              note: agent.id === 'opencode' ? 'Once.' : 'Once, for every folder.'
             },
             {
               id: 'login',
