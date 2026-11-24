@@ -49,6 +49,9 @@ left, and a new User category holds `avatar`, `account` and `signInForm`.
   with no background there.
 - **An image (and an avatar) that failed before the page hydrated shows its fallback**: its `error` fired with nobody
   listening, and the browser's broken image stayed.
+- **A component instance's root no longer renders again when nothing of its own changed**: it was handed a new props
+  object each time a context it reads changed (the plugins arriving, the session found as the page loads) — every
+  instance's root on a page rendered twice more on each load.
 - **The builder's Agent panel**: an Agent button in its header for Claude Code, OpenCode, Gemini CLI or Codex — on the
   space as a collaborator over the MCP (each agent's own way of adding it, then signing in and choosing this space,
   which the agent sees alone and none of until chosen; the Claude app's connector beside Claude Code), or on the
