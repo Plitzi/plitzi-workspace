@@ -4,7 +4,7 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/plitzi/plitzi-workspace/ci.yml?branch=main)](https://github.com/plitzi/plitzi-workspace/actions)
 [![Coverage Status](https://img.shields.io/coveralls/github/plitzi/plitzi-workspace/main.svg?style=flat)](https://coveralls.io/github/plitzi/plitzi-workspace?branch=main)
 [![npm version](https://img.shields.io/npm/v/@plitzi/plitzi-sdk.svg)](https://www.npmjs.com/package/@plitzi/plitzi-sdk)
-[![Community Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/RpYs8jwj8)
+[![Community Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/3mXw4grnmp)
 
 **Español:** [README.es.md](./README.es.md)
 
@@ -146,7 +146,7 @@ We welcome contributions from everyone! To keep the project healthy and collabor
 
 Join our community to discuss ideas, get help, or contribute:
 
-- **Discord:** [https://discord.gg/RpYs8jwj8](https://discord.gg/RpYs8jwj8)
+- **Discord:** [https://discord.gg/3mXw4grnmp](https://discord.gg/3mXw4grnmp)
 - **GitHub Discussions:** [https://github.com/plitzi/plitzi-workspace/discussions](https://github.com/plitzi/plitzi-workspace/discussions)
 - **Email:** crodriguez@plitzi.com
 
@@ -155,7 +155,7 @@ Join our community to discuss ideas, get help, or contribute:
 - **Read the docs:** [English](./docs/en/README.md) · [Español](./docs/es/README.md)
 - **Browse the [Wiki](https://github.com/plitzi/plitzi-workspace/wiki)** for additional guides and FAQs.
 - **Open a [GitHub Issue](https://github.com/plitzi/plitzi-workspace/issues)** for bugs or feature requests.
-- **Ask questions in [Discussions](https://github.com/plitzi/plitzi-workspace/discussions)** or on [Discord](https://discord.gg/RpYs8jwj8).
+- **Ask questions in [Discussions](https://github.com/plitzi/plitzi-workspace/discussions)** or on [Discord](https://discord.gg/3mXw4grnmp).
 
 ---
 
