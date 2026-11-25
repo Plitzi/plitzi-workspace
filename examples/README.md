@@ -5,8 +5,8 @@ real workspace package.
 
 A space on the platform (`*.plitzi.app`) needs none of these: the server, the accounts, the functions and the CDN are
 the platform's, and what runs there is shown as seeded spaces in `plitzi-sdk-server/prisma/seeds/spaces` — Ceniza,
-a whole restaurant website (`ceniza`); Tremor, a live WebGL globe of USGS earthquakes whose globe is a plugin on the
-space's CDN and whose server code is its functions (`tremor`); Fieldnotes, a blog whose visitors sign in with their
+a whole restaurant website (`ceniza`); Meridian, a live WebGL globe of the world's news and hazards whose globe is a
+plugin on the space's CDN and whose server code is its functions and the clocks that run them (`meridian`); Fieldnotes, a blog whose visitors sign in with their
 Plitzi account and whose author role the space declares and gives by email (`blog`); a server action and a render
 action (`shipping-quote`, `cat-gallery`); and a template, the pricing card on `saas-landing`'s CDN. What is here is
 the rest: a space on a page of your own, and a server of your own.
