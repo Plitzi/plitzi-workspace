@@ -27,9 +27,9 @@ export type KvStoreConfig = {
  *    written by something else is answered as the string it is rather than failing.
  * 2. **A counter's TTL is set once, by whoever created it, and never extended.** A window refreshed on every hit
  *    never closes while traffic keeps arriving — which is a rate limit that stops limiting exactly when it is
- *    being leant on. The counter is the one that created it precisely when the increment returns its own amount,
- *    so this needs no conditional-expire support from the adapter and works the same on Redis, Memcached or a
- *    table.
+ *    being leant on. The adapter's `increment` gives it in the same atomic step that creates the counter: set in a
+ *    second step, a store that failed it (a Redis that timed out between `INCRBY` and `EXPIRE`) kept the counter
+ *    for good, and a rate limit's window never opened again.
  * 3. **Nothing is caught.** This is not a cache: a miss means the rate limit did not count and the idempotency key
  *    was not seen, so an adapter that cannot answer fails the run rather than being read as "no value".
  *
@@ -86,16 +86,7 @@ export const createKvStore = (
     },
     set: (key, value, ttlSeconds) => adapter.set(prefixed(key), JSON.stringify(value), ttlSeconds),
     delete: key => adapter.delete(prefixed(key)),
-    increment: async (key, amount, ttlSeconds) => {
-      const full = prefixed(key);
-      const value = await adapter.increment(full, amount);
-      // Exactly its own amount means this call created the counter — the only moment its lifetime is set.
-      if (ttlSeconds !== undefined && value === amount) {
-        await adapter.expire(full, ttlSeconds);
-      }
-
-      return value;
-    },
+    increment: (key, amount, ttlSeconds) => adapter.increment(prefixed(key), amount, ttlSeconds),
     swap: (key, expected, next, ttlSeconds) =>
       adapter.swap(
         prefixed(key),

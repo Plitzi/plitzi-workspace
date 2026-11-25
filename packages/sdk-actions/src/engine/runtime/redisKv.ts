@@ -2,7 +2,8 @@ import type { ActionKvAdapter } from '../types';
 
 /**
  * The commands this adapter sends, typed by shape rather than by a client library: ioredis answers them as they are,
- * and any client that speaks them does. `eval` is for `swap`, the one operation Redis has no single command for.
+ * and any client that speaks them does. `eval` is for what Redis has no single command for: `swap`, and an increment
+ * that gives the counter its lifetime in the same step.
  */
 export type RedisKvClient = {
   get: (key: string) => Promise<string | null>;
@@ -11,8 +12,6 @@ export type RedisKvClient = {
     (key: string, value: string, mode: 'EX', seconds: number): Promise<unknown>;
   };
   del: (key: string) => Promise<number>;
-  incrby: (key: string, amount: number) => Promise<number>;
-  expire: (key: string, seconds: number) => Promise<number>;
   eval: (script: string, keys: number, ...args: (string | number)[]) => Promise<unknown>;
 };
 
@@ -42,7 +41,20 @@ return 1
 `;
 
 /**
- * An {@link ActionKvAdapter} over Redis: each operation one command, and `swap` one script.
+ * An increment and its lifetime as ONE step: `INCRBY`, then — when the counter holds no lifetime, which is what one it
+ * just created holds — `EXPIRE`, with nothing in between. Two commands left the key for good when Redis timed out on
+ * the second. A live counter keeps the lifetime it has, so a window never stretches on a hit.
+ */
+const INCREMENT = `
+local total = redis.call('INCRBY', KEYS[1], ARGV[1])
+if ARGV[2] ~= '' and redis.call('TTL', KEYS[1]) == -1 then
+  redis.call('EXPIRE', KEYS[1], tonumber(ARGV[2]))
+end
+return total
+`;
+
+/**
+ * An {@link ActionKvAdapter} over Redis: each operation one command, and `swap` and `increment` one script each.
  *
  * `client` may be a function, for a deployment whose connection comes and goes — it is asked on every call, and a
  * client it cannot give is its to refuse (throwing), never this adapter's to read as "no value".
@@ -64,10 +76,8 @@ export const createRedisKv = (
     delete: async name => {
       await redis().del(key(name));
     },
-    increment: (name, amount) => redis().incrby(key(name), amount),
-    expire: async (name, ttlSeconds) => {
-      await redis().expire(key(name), ttlSeconds);
-    },
+    increment: async (name, amount, ttlSeconds) =>
+      Number(await redis().eval(INCREMENT, 1, key(name), amount, ttlSeconds === undefined ? '' : ttlSeconds)),
     swap: async (name, expected, next, ttlSeconds) =>
       (await redis().eval(
         SWAP,

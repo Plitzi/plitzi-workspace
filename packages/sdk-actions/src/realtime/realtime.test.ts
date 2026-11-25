@@ -417,12 +417,16 @@ describe('granted channels', () => {
   });
 
   it('forgets a grant once its lifetime runs out', async () => {
-    const kv = createMemoryKv();
-    const grants = createRealtimeGrants(kv);
-    const grant = await grants.issue(SPACE, 'room:alpha', 60);
-    await kv.expire(`realtime-grant:1:main:${grant}`, 0);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const grants = createRealtimeGrants(createMemoryKv());
+      const grant = await grants.issue(SPACE, 'room:alpha', 60);
+      vi.setSystemTime(Date.now() + 61_000);
 
-    expect(await grants.opens(SPACE, 'room:alpha', grant)).toBe(false);
+      expect(await grants.opens(SPACE, 'room:alpha', grant)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('issues a grant only for a channel that takes one', async () => {

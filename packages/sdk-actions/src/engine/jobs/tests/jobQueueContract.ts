@@ -665,20 +665,23 @@ export const describeKv = (name: string, open: () => Promise<KvSubject>, enabled
       expect(await kv.get('hits')).toBe('22');
     });
 
-    it('keeps a counter’s lifetime when it is incremented, and starts again once it has lapsed', async () => {
-      await kv.increment('window', 1);
-      await kv.expire('window', 1);
-      expect(await kv.increment('window', 1)).toBe(2);
+    // A window refreshed on every hit never closes: the lifetime is the creating increment's, given in that same step.
+    it('gives a counter its lifetime as it creates it, keeps it when incremented, and starts again once lapsed', async () => {
+      expect(await kv.increment('window', 1, 1)).toBe(1);
+      expect(await kv.increment('window', 1, 60)).toBe(2);
       await wait(1_200);
 
       expect(await kv.get('window')).toBeUndefined();
       expect(await kv.increment('window', 1)).toBe(1);
     });
 
-    it('gives no lifetime to a key that is not there', async () => {
-      await kv.expire('nothing', 60);
+    // What an increment and an expire in two steps left behind when the second failed: it takes the lifetime it is given.
+    it('gives a live counter holding no lifetime the one it is given', async () => {
+      expect(await kv.increment('forever', 1)).toBe(1);
+      expect(await kv.increment('forever', 1, 1)).toBe(2);
+      await wait(1_200);
 
-      expect(await kv.get('nothing')).toBeUndefined();
+      expect(await kv.get('forever')).toBeUndefined();
     });
 
     it('writes only over the value it expected', async () => {

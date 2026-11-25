@@ -18,7 +18,6 @@ const memory = () => {
 
       return Promise.resolve(next);
     },
-    expire: () => Promise.resolve(),
     swap: (key, expected, next) => {
       if (keys.get(key) !== expected) {
         return Promise.resolve(false);

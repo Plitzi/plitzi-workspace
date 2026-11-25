@@ -1010,31 +1010,34 @@ import { createRedisKv } from '@plitzi/sdk-actions';
 createPlatform({ action: { lookups, kv: createRedisKv(redis, { prefix: 'myapp:' }) } });
 ```
 
-Anything else is six operations:
+Anything else is five operations:
 
 ```ts
 const kv: ActionKvAdapter = {
-  get, set, delete, increment, expire,
+  get, set, delete,
+  // Adds atomically; the counter it creates — or a live one holding no lifetime — takes `ttlSeconds` in that step.
+  increment: (key, amount, ttlSeconds) => …,
   // Writes `next` only if the key holds `expected` — or, with `expected` undefined, only if it holds nothing.
   swap: (key, expected, next, ttlSeconds) => …
 };
 ```
 
 `createMemoryKv` (in-process), `createFileKv`, `createSqliteKv`, `createRedisKv` and the MySQL and Mongo adapters
-implement all six, and are held to one contract in `sdk-server`'s own tests — racing writers included.
+implement all five, and are held to one contract in `sdk-server`'s own tests — racing writers included.
 
-Six operations over strings, and **no rule to remember**. How a counter behaves is the server's, the same for
-every deployment — the key prefixing, the JSON round trip, and the one that a rate limit lives or dies by: a
-window's lifetime is set once, by whoever created the counter, and never extended. Refreshed on every hit, a
+Five operations over strings. How a counter behaves is the server's, the same for every deployment — the key
+prefixing and the JSON round trip. The one rule a store keeps is the one a rate limit lives or dies by: a window's
+lifetime is set once, by the increment that creates the counter, and never extended. Refreshed on every hit, a
 one-minute window never closes while traffic keeps arriving.
 
 Two things your adapter does owe:
 
-- **`increment` and `swap` must be atomic.** They are what get-then-set cannot be, and the reason they are operations
-  rather than something the server composes: a rate limit counts with `increment`, and single-flight, `setIf` and
-  every list write stand on `swap` — a single-flight key is written only where none is, with its lifetime in the same
-  write, so no failure between two calls leaves one that never expires. On Redis it is a script (`createRedisKv` has it); on SQL, `UPDATE … WHERE v = ?` and an
-  insert that ignores a key already there — comparing bytes, not a collation that ignores case.
+- **`increment` and `swap` must be atomic — a lifetime included.** They are what get-then-set cannot be: a rate limit
+  counts with `increment`, and single-flight, `setIf` and every list write stand on `swap`. Each writes its key's
+  lifetime in the same step as its value, never in a call after it: an increment and an expire in two steps left the
+  counter for good when the store failed the second (a Redis timing out between them did). On Redis each is a script
+  (`createRedisKv` has both); on SQL, one upsert — `UPDATE … WHERE v = ?` and an insert that ignores a key already
+  there for `swap` — comparing bytes, not a collation that ignores case.
 - **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
   here means the rate limit did not count and the idempotency key was not seen.
 

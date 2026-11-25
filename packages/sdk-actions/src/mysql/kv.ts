@@ -67,22 +67,25 @@ export const createMysqlKv = ({ pool, tablePrefix = '', createTables = true }: M
       await execute(await db(), `DELETE FROM ${kv} WHERE k = ?`, [key]);
     },
 
-    increment: async (key, amount) => {
+    increment: async (key, amount, ttlSeconds) => {
       const connection = await (await db()).getConnection();
       try {
         await connection.beginTransaction();
         /**
          * `v` FIRST: the assignments run left to right and each sees the ones before it, so the value has to be
          * computed while `expires_at` still says whether the old one is alive. A lapsed counter starts again from
-         * zero, and without the lifetime it had. `+ 0` reads the text as a number, as Redis reads its strings.
+         * zero, with the lifetime it is given; a live one keeps its own, or takes the one given when it has none —
+         * in this statement, never one after it. `+ 0` reads the text as a number, as Redis reads its strings.
          */
+        const expiry = ttlSeconds === undefined ? 'NULL' : `${NOW_MS} + ?`;
+        const lifetime = ttlSeconds === undefined ? [] : [ttlSeconds * 1000];
         await execute(
           connection,
-          `INSERT INTO ${kv} (k, v, expires_at) VALUES (?, CAST(? AS CHAR), NULL)
+          `INSERT INTO ${kv} (k, v, expires_at) VALUES (?, CAST(? AS CHAR), ${expiry})
           ON DUPLICATE KEY UPDATE
             v = CAST(IF(${LIVE}, (v + 0) + ?, ?) AS CHAR),
-            expires_at = IF(${LIVE}, expires_at, NULL)`,
-          [key, amount, amount, amount]
+            expires_at = IF(${LIVE}, COALESCE(expires_at, VALUES(expires_at)), VALUES(expires_at))`,
+          [key, amount, ...lifetime, amount, amount]
         );
         const row = await selectOne<{ v: string }>(connection, `SELECT v FROM ${kv} WHERE k = ?`, [key]);
         await connection.commit();
@@ -94,13 +97,6 @@ export const createMysqlKv = ({ pool, tablePrefix = '', createTables = true }: M
       } finally {
         connection.release();
       }
-    },
-
-    expire: async (key, ttlSeconds) => {
-      await execute(await db(), `UPDATE ${kv} SET expires_at = ${NOW_MS} + ? WHERE k = ? AND ${LIVE}`, [
-        ttlSeconds * 1000,
-        key
-      ]);
     },
 
     /**

@@ -184,9 +184,9 @@ export type SSRActionConfig = {
   /**
    * Where the `kv` tasks keep things — shaped as `ActionKvAdapter` in `@plitzi/sdk-actions`.
    *
-   * Six operations over strings, with no rule to obey: Redis, Memcached, a table, whatever this deployment
-   * already runs. How a counter BEHAVES — the key prefixing, the JSON round trip, and the rule that a window's
-   * lifetime is set once by whoever created it — belongs to the server, not to the thing it writes into.
+   * Five operations over strings: Redis, Memcached, a table, whatever this deployment already runs. How a counter
+   * BEHAVES — the key prefixing, the JSON round trip — belongs to the server; the one rule a store keeps is that an
+   * increment gives the counter it creates its lifetime in the same atomic step.
    *
    * Omitted leaves an in-process Map, which counts only its own replica. That is fine for one; for a cluster it is
    * a rate limit that multiplies by the number of them, so a multi-replica deployment supplies a shared one.
@@ -195,8 +195,8 @@ export type SSRActionConfig = {
     get: (key: string) => Promise<string | undefined>;
     set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
     delete: (key: string) => Promise<void>;
-    increment: (key: string, amount: number) => Promise<number>;
-    expire: (key: string, ttlSeconds: number) => Promise<void>;
+    /** Adds, atomically; a counter it creates — or one holding no lifetime — is given `ttlSeconds` in the same step. */
+    increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
     /** Writes `next` only if the key holds `expected` (nothing, when undefined); answers whether it wrote. Atomic. */
     swap: (key: string, expected: string | undefined, next: string, ttlSeconds?: number) => Promise<boolean>;
   };

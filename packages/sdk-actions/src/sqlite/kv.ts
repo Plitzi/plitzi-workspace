@@ -66,18 +66,18 @@ export const createSqliteKv = (options: SqliteKvOptions): ActionKvAdapter => {
        ON CONFLICT (key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at`
     ),
     delete: db.prepare(`DELETE FROM ${table} WHERE key = ?`),
-    // A counter whose window has run out starts again from `amount` rather than adding to a dead value, and its
-    // lifetime is never renewed here — a rate-limit window that stretched on every hit would never close.
+    // A counter whose window has run out starts again from `amount` rather than adding to a dead value, with the
+    // lifetime it is given; a live one keeps its own — a rate-limit window that stretched on every hit would never
+    // close — or takes the one given when it has none.
     increment: db.prepare(
-      `INSERT INTO ${table} (key, value, expires_at) VALUES (?, ?, NULL)
+      `INSERT INTO ${table} (key, value, expires_at) VALUES (?, ?, ${expiresAt})
        ON CONFLICT (key) DO UPDATE SET
          value = CASE WHEN ${table}.expires_at IS NOT NULL AND ${table}.expires_at <= ${NOW_MS}
            THEN excluded.value ELSE CAST(${table}.value + ? AS TEXT) END,
          expires_at = CASE WHEN ${table}.expires_at IS NOT NULL AND ${table}.expires_at <= ${NOW_MS}
-           THEN NULL ELSE ${table}.expires_at END
+           THEN excluded.expires_at ELSE COALESCE(${table}.expires_at, excluded.expires_at) END
        RETURNING value`
     ),
-    expire: db.prepare(`UPDATE ${table} SET expires_at = ${expiresAt} WHERE key = ? AND ${live}`),
     // Expecting nothing: the insert takes a free key, and over a taken one updates only a row whose lifetime has run
     // out — a live row is left as it is, and no row changed is the refusal.
     claim: db.prepare(
@@ -118,19 +118,14 @@ export const createSqliteKv = (options: SqliteKvOptions): ActionKvAdapter => {
 
       return Promise.resolve();
     },
-    increment: (key, amount) => {
+    increment: (key, amount, ttlSeconds) => {
       // A JS number binds as a REAL, and `'20' + 2.0` is `22.0`: a whole amount goes as an INTEGER, so the counter
       // reads `22` as every other store's does.
       const step = Number.isInteger(amount) ? BigInt(amount) : amount;
-      const value = text(statements.increment.get(key, String(amount), step));
+      const value = text(statements.increment.get(key, String(amount), expiry(ttlSeconds), expiry(ttlSeconds), step));
       sweep();
 
       return Promise.resolve(Number(value ?? amount));
-    },
-    expire: (key, ttlSeconds) => {
-      statements.expire.run(expiry(ttlSeconds), expiry(ttlSeconds), key);
-
-      return Promise.resolve();
     },
     swap: (key, expected, next, ttlSeconds) => {
       const written =

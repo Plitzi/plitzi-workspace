@@ -89,8 +89,9 @@ export const createMongoKv = ({ db, collection = 'action_kv' }: MongoKvOptions):
       await (await store()).deleteOne({ _id: key });
     },
 
-    increment: async (key, amount) => {
+    increment: async (key, amount, ttlSeconds) => {
       const keysNow = await store();
+      const given = ttlSeconds === undefined ? null : expiryIn(ttlSeconds);
       const updated = await upserting(() =>
         keysNow.findOneAndUpdate(
           { _id: key },
@@ -98,7 +99,8 @@ export const createMongoKv = ({ db, collection = 'action_kv' }: MongoKvOptions):
             { $set: { live: LIVE } },
             {
               $set: {
-                // A lapsed counter starts again from zero, and without the lifetime it had.
+                // A lapsed counter starts again from zero, with the lifetime it is given; a live one keeps its own,
+                // or takes the one given when it has none — in this same update.
                 value: {
                   $toString: {
                     $add: [
@@ -107,7 +109,7 @@ export const createMongoKv = ({ db, collection = 'action_kv' }: MongoKvOptions):
                     ]
                   }
                 },
-                expiresAt: { $cond: ['$live', { $ifNull: ['$expiresAt', null] }, null] }
+                expiresAt: { $cond: ['$live', { $ifNull: ['$expiresAt', given] }, given] }
               }
             },
             { $unset: 'live' }
@@ -117,10 +119,6 @@ export const createMongoKv = ({ db, collection = 'action_kv' }: MongoKvOptions):
       );
 
       return Number(updated?.value ?? amount);
-    },
-
-    expire: async (key, ttlSeconds) => {
-      await (await store()).updateOne({ _id: key, $expr: LIVE }, [{ $set: { expiresAt: expiryIn(ttlSeconds) } }]);
     },
 
     /**

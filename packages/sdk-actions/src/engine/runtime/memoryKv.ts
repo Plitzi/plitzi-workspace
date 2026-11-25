@@ -13,7 +13,6 @@ export const KV_METHODS: StoreMethods<ActionKvAdapter> = {
   set: true,
   delete: true,
   increment: true,
-  expire: true,
   swap: true
 };
 
@@ -93,22 +92,14 @@ export const createMapKv = (entries: Map<string, KvEntry>, changed: () => void =
 
       return Promise.resolve();
     },
-    increment: (key, amount) => {
+    increment: (key, amount, ttlSeconds) => {
       const current = read(key);
       const base = Number(current?.value ?? 0);
       const next = (Number.isFinite(base) ? base : 0) + amount;
-      write(key, { value: String(next), expiresAt: current?.expiresAt });
+      // A counter it creates takes its lifetime now; a live one keeps its own, or takes this one when it has none.
+      write(key, { value: String(next), expiresAt: current?.expiresAt ?? expiry(ttlSeconds) });
 
       return Promise.resolve(next);
-    },
-    expire: (key, ttlSeconds) => {
-      const current = read(key);
-      if (current) {
-        entries.set(key, { ...current, expiresAt: expiry(ttlSeconds) });
-        changed();
-      }
-
-      return Promise.resolve();
     },
     swap: (key, expected, next, ttlSeconds) => {
       if (read(key)?.value !== expected) {

@@ -28,15 +28,10 @@ const spyAdapter = () => {
 
       return inner.delete(key);
     },
-    increment: (key, amount) => {
-      calls.push({ method: 'increment', args: [key, amount] });
+    increment: (key, amount, ttl) => {
+      calls.push({ method: 'increment', args: [key, amount, ttl] });
 
-      return inner.increment(key, amount);
-    },
-    expire: (key, ttl) => {
-      calls.push({ method: 'expire', args: [key, ttl] });
-
-      return inner.expire(key, ttl);
+      return inner.increment(key, amount, ttl);
     },
     swap: (key, expected, next, ttl) => {
       calls.push({ method: 'swap', args: [key, expected, next, ttl] });
@@ -79,26 +74,19 @@ describe('createKvStore', () => {
     expect(await createKvStore(createMemoryKv()).get('missing')).toBeUndefined();
   });
 
-  /** The rule a rate limit lives or dies by, and the reason it is HERE and not in each adapter: a window whose
-   *  lifetime is refreshed on every hit never closes while traffic keeps arriving. The counter that created it is
-   *  the one whose increment came back as its own amount — no conditional expire needed from the store. */
-  it('sets a counter lifetime once, on the increment that created it', async () => {
+  /** An `INCRBY` and an `EXPIRE` after it left the counter for good when Redis timed out on the second: the lifetime
+   *  goes in the increment itself, which every adapter applies in one step (the contract, `jobQueueContract.ts`). */
+  it('hands a counter its lifetime in the increment itself, never in a step after', async () => {
     const { adapter, calls } = spyAdapter();
     const kv = createKvStore(adapter);
 
     await kv.increment('hook:abc', 1, 60);
-    await kv.increment('hook:abc', 1, 60);
-    await kv.increment('hook:abc', 1, 60);
+    await kv.increment('total', 1);
 
-    expect(calls.filter(call => call.method === 'expire')).toEqual([{ method: 'expire', args: ['kv:hook:abc', 60] }]);
-  });
-
-  it('sets no lifetime at all when none was asked for', async () => {
-    const { adapter, calls } = spyAdapter();
-
-    await createKvStore(adapter).increment('total', 1);
-
-    expect(calls.some(call => call.method === 'expire')).toBe(false);
+    expect(calls).toEqual([
+      { method: 'increment', args: ['kv:hook:abc', 1, 60] },
+      { method: 'increment', args: ['kv:total', 1, undefined] }
+    ]);
   });
 
   it('counts up across calls', async () => {

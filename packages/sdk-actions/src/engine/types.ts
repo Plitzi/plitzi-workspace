@@ -81,10 +81,13 @@ export type ActionKvAdapter = {
   get: (key: string) => Promise<string | undefined>;
   set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
   delete: (key: string) => Promise<void>;
-  /** Adds to a counter and answers the NEW total. Must be atomic — this is what get-then-set cannot be. */
-  increment: (key: string, amount: number) => Promise<number>;
-  /** Sets a lifetime on a key that already exists. When to call it is decided above, never here. */
-  expire: (key: string, ttlSeconds: number) => Promise<void>;
+  /**
+   * Adds to a counter and answers the NEW total, in ONE atomic step — this is what get-then-set cannot be. A counter
+   * it creates (absent, or past its lifetime) is given `ttlSeconds` in that same step, and a live one keeps its own —
+   * or, holding none, takes `ttlSeconds`. Never a separate step after: a store that failed the second one kept the
+   * counter for good (a Redis that timed out between `INCRBY` and `EXPIRE` did).
+   */
+  increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
   /**
    * Writes `next` only if the key still holds `expected` — or, with `expected` undefined, only if it holds nothing (a
    * key past its lifetime holds nothing). Answers whether it wrote. Must be atomic: it is what lets two writers
