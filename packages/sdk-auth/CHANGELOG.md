@@ -1,5 +1,15 @@
 # @plitzi/sdk-auth
 
+## 0.39.14
+
+### Patch Changes
+
+- f1922cf: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [f1922cf]
+  - @plitzi/sdk-navigation@0.39.14
+  - @plitzi/sdk-shared@0.39.14
+
 ## 0.39.13
 
 ### Patch Changes
