@@ -1,6 +1,7 @@
 export { fetchConnectorRecords, rebaseMedia, writeConnectorRecord } from './connectors/engine';
 export { createConnectorResolver } from './connectors/resolver';
 export { KEPT_CALL_MS, KEPT_CALLS_PER_SPACE } from './engine/jobs/calls';
+export { resumeAfterCodeChange, setAsideByItsCode } from './engine/jobs/codeChanged';
 export { createFileJobQueue } from './engine/jobs/fileQueue';
 export { createActionJobs } from './engine/jobs/jobs';
 export { createMemoryJobQueue } from './engine/jobs/memoryQueue';
