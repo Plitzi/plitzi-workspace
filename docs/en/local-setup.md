@@ -15,7 +15,7 @@ After [Getting started](./getting-started.md):
    - `https://api-dev.plitzi.com`
    - `https://ssr-dev.plitzi.com`
 
-That is enough to work on UI, SDK packages, and most monorepo changes. Ask the team in [Discord](https://discord.gg/plitzi) or [GitHub Discussions](https://github.com/plitzi/plitzi-workspace/discussions) if you need credentials or a specific dev URL.
+That is enough to work on UI, SDK packages, and most monorepo changes. Ask the team in [Discord](https://discord.gg/RpYs8jwj8) or [GitHub Discussions](https://github.com/plitzi/plitzi-workspace/discussions) if you need credentials or a specific dev URL.
 
 ## Maintainers: full local stack (optional)
 

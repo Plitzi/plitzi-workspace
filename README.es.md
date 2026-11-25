@@ -4,7 +4,7 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/plitzi/plitzi-workspace/ci.yml?branch=main)](https://github.com/plitzi/plitzi-workspace/actions)
 [![Coverage Status](https://img.shields.io/coveralls/github/plitzi/plitzi-workspace/main.svg?style=flat)](https://coveralls.io/github/plitzi/plitzi-workspace?branch=main)
 [![npm version](https://img.shields.io/npm/v/@plitzi/plitzi-sdk.svg)](https://www.npmjs.com/package/@plitzi/plitzi-sdk)
-[![Community Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/plitzi)
+[![Community Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/RpYs8jwj8)
 
 **English:** [README.md](./README.md)
 
@@ -144,7 +144,7 @@ Más detalles en [docs/es/](./docs/es/README.md), [docs/en/](./docs/en/README.md
 
 ## Comunidad y soporte ![Community](https://img.shields.io/badge/-Comunidad%20y%20soporte-8e24aa?style=flat-square&logo=discord&logoColor=white)
 
-- **Discord:** [https://discord.gg/plitzi](https://discord.gg/plitzi)
+- **Discord:** [https://discord.gg/RpYs8jwj8](https://discord.gg/RpYs8jwj8)
 - **GitHub Discussions:** [https://github.com/plitzi/plitzi-workspace/discussions](https://github.com/plitzi/plitzi-workspace/discussions)
 - **Email:** crodriguez@plitzi.com
 

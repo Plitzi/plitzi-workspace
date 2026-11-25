@@ -15,7 +15,7 @@ Tras [Primeros pasos](./getting-started.md):
    - `https://api-dev.plitzi.com`
    - `https://ssr-dev.plitzi.com`
 
-Con eso basta para trabajar en UI, paquetes del SDK y la mayoría de cambios del monorepo. Pregunta al equipo en [Discord](https://discord.gg/plitzi) o [GitHub Discussions](https://github.com/plitzi/plitzi-workspace/discussions) si necesitas credenciales o una URL concreta.
+Con eso basta para trabajar en UI, paquetes del SDK y la mayoría de cambios del monorepo. Pregunta al equipo en [Discord](https://discord.gg/RpYs8jwj8) o [GitHub Discussions](https://github.com/plitzi/plitzi-workspace/discussions) si necesitas credenciales o una URL concreta.
 
 ## Maintainers: stack local completo (opcional)
 
