@@ -2,7 +2,8 @@ import { get, omit } from '@plitzi/plitzi-ui/helpers';
 
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
 import { ruleValuesOf } from '@plitzi/sdk-shared/conditions';
-import { flowStarted, pConsole } from '@plitzi/sdk-shared/devTools';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { flowStarted } from '@plitzi/sdk-shared/devTools/running';
 import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { coerceDeclaredParams } from './helpers/coerceDeclaredParams';

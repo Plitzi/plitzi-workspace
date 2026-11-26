@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { flowsRunning } from '@plitzi/sdk-shared/devTools';
+import { flowsRunning } from '@plitzi/sdk-shared/devTools/running';
 
 import InteractionsManager from './InteractionsManager';
 import { makeInteractions, triggerDef } from './tests/InteractionsManager';

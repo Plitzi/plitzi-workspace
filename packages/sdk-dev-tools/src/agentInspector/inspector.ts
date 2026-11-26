@@ -6,7 +6,7 @@ import type { FlowRun } from './flowRuns';
 import type { ElementReport } from './report';
 import type { DevStore } from '@plitzi/nexus';
 import type { SignedInTestAccount } from '@plitzi/sdk-shared';
-import type { RunningFlow } from '@plitzi/sdk-shared/devTools';
+import type { RunningFlow } from '@plitzi/sdk-shared/devTools/running';
 
 /** `window.__plitzi`: the page's state, data, elements and flows, in text, for whoever cannot read the panel. */
 export type AgentInspector = {

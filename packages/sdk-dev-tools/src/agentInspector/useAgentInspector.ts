@@ -2,7 +2,8 @@ import { useContext, useEffect } from 'react';
 
 import { getDevStoresSnapshot } from '@plitzi/nexus';
 import { StoreContext } from '@plitzi/nexus/react';
-import { flowsRunning, pConsole } from '@plitzi/sdk-shared/devTools';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { flowsRunning } from '@plitzi/sdk-shared/devTools/running';
 import { useCommonStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { flowRunLine, flowRunOf } from './flowRuns';
