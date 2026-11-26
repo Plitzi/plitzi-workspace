@@ -53,7 +53,8 @@ refuses or warns of, with the fix.
     placed with `defineElement(declaration)` — to the events, actions and attributes it declares. See
     [plugins](plugins.md).
 13. **Usable without sight.** Screen readers and browser agents (Claude in Chrome) find a page's controls in its
-    accessibility tree: every button and link has words (an icon-only button a `title`), every field a `label`
+    accessibility tree: every button, link and disclosure summary has words — an icon alone, a `label`, the one name
+    every control takes (a button's `title` only adds the tooltip) — every field a `label`
     (`hideLabel: true` hides it and keeps the name), every image an `alt` or `decorative: true`. Clicks go on a
     `button` — it holds children, so a whole card can be one — or a `link`, never on a container. See
     [accessibility](accessibility.md).

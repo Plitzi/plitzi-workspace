@@ -37,6 +37,7 @@ same flags, decided on the server. Use the step builders — they fill in where 
 - **Each step reads the page as it is when it runs.** A `when` or a `{{ state.x }}` after a `setState` sees the new
   value, and one after a `delay` or a server action sees whatever changed meanwhile. To act on the value from BEFORE
   a write, put the step that reads it first.
+- **Shared flow:** one `StepSpec[]`.
 - **Keys are flat names.** A dotted key (`docsClosed.start`) is split into a path; use `docsClosedStart`.
 - **Back skips a replaced address.** `navigate({ urlType: 'internal', url, replace: true })` takes the place of the one
   the visitor is on: a sheet a query opened (`?stats=1`), closed, is not reopened by Back.

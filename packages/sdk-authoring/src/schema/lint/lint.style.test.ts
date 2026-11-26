@@ -359,9 +359,18 @@ describe('lintSpace', () => {
     });
   });
   describe('accessibility', () => {
-    const iconOnly = (schema: Schema, id: string, type: 'button' | 'link', attributes: Record<string, unknown>) => {
+    const iconOnly = (
+      schema: Schema,
+      id: string,
+      type: 'button' | 'link' | 'disclosureSummary',
+      attributes: Record<string, unknown>,
+      icon: { type: 'fontAwesome' | 'svg'; attributes: Record<string, unknown> } = {
+        type: 'fontAwesome',
+        attributes: { icon: 'fa-solid fa-xmark' }
+      }
+    ) => {
       addElement(schema, { id, type, attributes });
-      addElement(schema, { id: `${id}-icon`, type: 'fontAwesome', attributes: { icon: 'fa-solid fa-xmark' } });
+      addElement(schema, { id: `${id}-icon`, type: icon.type, attributes: icon.attributes });
       const home = homeId(schema);
       schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(
         item => item !== `${id}-icon`
@@ -397,6 +406,42 @@ describe('lintSpace', () => {
       });
 
       expect(warningsOf(documents)).not.toContain('control-without-name');
+    });
+
+    // A menu's burger: a disclosure's summary holding an icon alone is a control too, and was authored unnamed, unsaid.
+    it('control-without-name reads a disclosure’s summary with an icon alone, quiet once a label names it', () => {
+      const BURGER = { type: 'svg' as const, attributes: { content: '<svg viewBox="0 0 24 24"></svg>' } };
+      const unnamed = withChange(({ schema }) => {
+        iconOnly(schema, 'menu', 'disclosureSummary', { marker: false }, BURGER);
+      });
+      const named = withChange(({ schema }) => {
+        iconOnly(schema, 'menu', 'disclosureSummary', { marker: false, label: 'Menu' }, BURGER);
+        iconOnly(
+          schema,
+          'menu-2',
+          'disclosureSummary',
+          { marker: false },
+          {
+            type: 'svg',
+            attributes: { ...BURGER.attributes, label: 'Menu' }
+          }
+        );
+        // An svg with a label is a picture with a name: it names the button around it too.
+        iconOnly(
+          schema,
+          'close',
+          'button',
+          { content: '' },
+          { type: 'svg', attributes: { ...BURGER.attributes, label: 'Close' } }
+        );
+      });
+
+      expect(
+        lintSpace(unnamed)
+          .warnings.filter(issue => issue.code === 'control-without-name')
+          .map(issue => issue.elementId)
+      ).toEqual(['menu']);
+      expect(warningsOf(named)).not.toContain('control-without-name');
     });
 
     it('control-without-name reads a field nothing names — a placeholder names only a field typed into', () => {

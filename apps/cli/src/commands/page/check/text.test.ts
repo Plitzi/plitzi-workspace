@@ -251,3 +251,23 @@ describe('words that run past their box, in a page’s report', () => {
     );
   });
 });
+
+// A page-load flow waiting out a delay: its state read meanwhile said `{}` with nothing beside it, and a run debugged a
+// flow that worked.
+describe('the state read while a flow still runs', () => {
+  it('says the flows still running beside it, and how to read it later', () => {
+    const text = reportText(
+      {
+        ...report({}),
+        state: { step: 1 },
+        running: [{ trigger: 'Step the demo [onPageLoad]', on: 'home', ms: 3200 }]
+      },
+      { state: true, elements: [] }
+    );
+
+    expect(text).toContain('· state {"step":1}');
+    expect(text).toContain(
+      '· 1 flow still running — the state above may change yet: Step the demo [onPageLoad] on home (3.2 s); --steps "wait <s>s" reads it later'
+    );
+  });
+});

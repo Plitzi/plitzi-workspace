@@ -13,8 +13,9 @@ them the same way you fix any other warning. A page's heading outline is a sugge
 // Words of its own: nothing to add.
 button({ content: 'Save' })
 
-// An icon only: `title` is its name, and also its tooltip. The icon is hidden from the tree by itself.
-button({ content: '', title: 'Close', icon: 'fa-solid fa-xmark' })
+// An icon only: `label` is its name — the one every control takes, a link's and a summary's too. `title` adds the
+// tooltip. The icon is hidden from the tree by itself.
+button({ content: '', label: 'Close', icon: 'fa-solid fa-xmark' })
 
 // Words that do not say what it does — a key hint, a count: `label` is read in their place.
 button({ content: 'V', label: 'Select (V)', title: 'Select — V', icon: 'fa-solid fa-arrow-pointer' })
@@ -70,7 +71,7 @@ A dropdown opens from a button too: put one among its children, outside the popu
 (`aria-haspopup`, `aria-expanded`) and moves the focus into the menu and back out.
 
 ```ts
-dropdown({ children: [dropdownPopup({ children: [ /* menu entries: buttons or links */ ] }), button({ content: '', title: 'Account', children: [avatar] })] })
+dropdown({ children: [dropdownPopup({ children: [ /* menu entries: buttons or links */ ] }), button({ content: '', label: 'Account', children: [avatar] })] })
 ```
 
 ## State is said, not only styled
@@ -88,7 +89,8 @@ row's panel is drawn as `<id>-<row>`, and the row's button points at its own. Wo
 A part that opens and closes — a question and its answer, a menu, "show more" — is a `disclosure`, and needs no state
 nor `ariaExpanded`: `disclosure({ children: [disclosureSummary([text({ content: 'Question' })]), …what it shows] })`.
 It is the browser's own `<details>`, announced as one; the summary is the control and its name (words in it, never a
-button), and lights the `expanded` state while open. One `name` for several makes them an accordion, one open at a time
+button) — a menu's burger, an icon alone, names it with `label`: `disclosureSummary({ label: 'Menu', marker: false,
+children: [svg(BURGER)] })`. It lights the `expanded` state while open. One `name` for several makes them an accordion, one open at a time
 ([recipes/accordion.ts](../recipes/accordion.ts)); Escape closes it, and so does a press outside with
 `closeOnClickOutside` (a menu).
 Results, a menu or a set of options someone goes through with the keyboard sit in `focusGroup({ label, children })`:

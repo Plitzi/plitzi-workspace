@@ -2,7 +2,7 @@ import { useContext, useEffect } from 'react';
 
 import { getDevStoresSnapshot } from '@plitzi/nexus';
 import { StoreContext } from '@plitzi/nexus/react';
-import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { flowsRunning, pConsole } from '@plitzi/sdk-shared/devTools';
 import { useCommonStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { flowRunLine, flowRunOf } from './flowRuns';
@@ -66,6 +66,8 @@ const useAgentInspector = (enabled: boolean, target?: Window | null): void => {
       writeTestAccount: account => setCommon('runtime.testAccount', account),
       stores: () => getDevStoresSnapshot().map(entry => entry.store),
       runs: () => runs,
+      runningFlows: flowsRunning,
+      now: () => pConsole.getTime().valueOf(),
       setWatching: on => {
         watching = on;
       },

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
+import { flowsRunning } from '@plitzi/sdk-shared/devTools';
+
 import InteractionsManager from './InteractionsManager';
 import { makeInteractions, triggerDef } from './tests/InteractionsManager';
 
@@ -39,6 +41,22 @@ describe('InteractionsManager — whileRunning', () => {
 
     return { manager, started, finished, gates, settle };
   };
+
+  // A reading of the page taken while a page-load flow waited out a delay said its state was `{}`, and nothing said a
+  // flow was still on its way: the dev tools knew a flow only once it had ended.
+  it('says a flow is running from its first step to its last, every firing of a parallel one apart', async () => {
+    const { manager, gates, settle } = setup('parallel');
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+
+    expect(flowsRunning().map(flow => flow.on)).toEqual(['el1', 'el1']);
+
+    gates.forEach(open => open());
+    await settle();
+
+    expect(flowsRunning()).toEqual([]);
+  });
 
   it('skips a firing while the flow runs, by default', async () => {
     const { manager, started, gates, settle } = setup();

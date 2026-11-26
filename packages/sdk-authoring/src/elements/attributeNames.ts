@@ -82,7 +82,7 @@ export const elementAttributeNames = {
     'rejectButtonLabel'
   ],
   disclosure: ['closeOnClickOutside', 'closeOnNavigate', 'name', 'open'],
-  disclosureSummary: ['marker'],
+  disclosureSummary: ['label', 'marker'],
   dropdown: [
     'backgroundDisabled',
     'closeOnClickBackground',

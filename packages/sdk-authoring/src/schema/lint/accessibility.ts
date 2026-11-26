@@ -18,11 +18,15 @@ import type { Element } from '@plitzi/sdk-shared';
 /**
  * The attributes a control's name can come from, by type. What a type does not list here names nothing.
  *
- * `content` on a button is its visible text; `title` is the tooltip the browser falls back to when there is none.
+ * `label` names every control whose words do not say what it does — a button, a link, a disclosure's summary — and an
+ * `svg` or an icon inside one. `content` on a button is its visible text; `title` is the tooltip the browser falls back
+ * to when there is none.
  */
 const NAMING_ATTRIBUTES: Readonly<Record<string, readonly string[]>> = {
   button: ['content', 'title', 'label'],
   link: ['content', 'label'],
+  disclosureSummary: ['label'],
+  svg: ['label'],
   formControl: ['label'],
   text: ['content'],
   heading: ['content'],
@@ -168,13 +172,19 @@ const hasWordsInside = (ctx: LintContext, id: string): boolean =>
     return own || hasWordsInside(ctx, childId);
   });
 
-const FIXES: Readonly<Record<'button' | 'link', string>> = {
+/** What names each control whose words do not: `label`, on every one of them. */
+const FIXES: Readonly<Record<'button' | 'link' | 'disclosureSummary', string>> = {
   button:
-    'Give it a `title` saying what it does — `button({ title: "Close", … })` — which is also its tooltip, or words of its own in `content`.',
-  link: 'Give it words of its own in `content` — `link({ content: "Pricing", … })` — or, where its words are an icon or a picture, a `label` saying where it goes: `link({ label: "Your profile", … })`.'
+    'Give it words of its own in `content`, or — where its words are an icon — a `label` saying what it does: `button({ label: "Close", … })` (a `title` adds the tooltip).',
+  link: 'Give it words of its own in `content` — `link({ content: "Pricing", … })` — or, where its words are an icon or a picture, a `label` saying where it goes: `link({ label: "Your profile", … })`.',
+  disclosureSummary:
+    'Give it words inside — a `text` — or, where its sign is an icon alone (a menu’s burger), a `label` saying what it opens: `disclosureSummary({ label: "Menu", … })`.'
 };
 
-/** A button, a link or a form field that nothing names. */
+const NAMED_CONTROLS = new Set<string>(Object.keys(FIXES));
+const isNamedControl = (type: string): type is keyof typeof FIXES => NAMED_CONTROLS.has(type);
+
+/** A button, a link, a disclosure's summary or a form field that nothing names. */
 const warnUnnamedControl = (ctx: LintContext, element: Element, where: string): void => {
   const { type } = element.definition;
   if (type === 'formControl') {
@@ -193,11 +203,11 @@ const warnUnnamedControl = (ctx: LintContext, element: Element, where: string): 
     return;
   }
 
-  if (type !== 'button' && type !== 'link') {
+  if (!isNamedControl(type)) {
     return;
   }
 
-  if (NAMING_ATTRIBUTES[type].some(name => says(ctx, element, name)) || hasWordsInside(ctx, element.id)) {
+  if ((NAMING_ATTRIBUTES[type] ?? []).some(name => says(ctx, element, name)) || hasWordsInside(ctx, element.id)) {
     return;
   }
 

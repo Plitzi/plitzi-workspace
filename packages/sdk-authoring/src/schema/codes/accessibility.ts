@@ -4,8 +4,8 @@ import type { AuthoringCodeEntry } from './entry';
 export const ACCESSIBILITY_CODES = {
   'control-without-name': {
     kind: 'warned',
-    means: 'a button or a link with no words, or a field nothing names',
-    fix: '`title` on the button, `label` on the link, `label` (with `hideLabel: true`) on the field'
+    means: 'a button, a link or a disclosure’s summary with no words, or a field nothing names',
+    fix: '`label` on the control (a button’s `title` adds the tooltip), `label` (with `hideLabel: true`) on the field'
   },
   'embed-without-title': {
     kind: 'warned',

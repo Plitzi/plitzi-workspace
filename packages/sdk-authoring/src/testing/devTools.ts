@@ -23,10 +23,22 @@ export interface DevToolsFlow {
   steps: DevToolsFlowStep[];
 }
 
+/** A flow still on its way when the page was read: what fired it, on what, and for how long so far. */
+export interface DevToolsRunningFlow {
+  trigger: string;
+  on?: string;
+  ms: number;
+}
+
 export interface DevToolsReport {
   /** Whether the page had its dev tools on — without them there is nothing to read. */
   available: boolean;
   flows: DevToolsFlow[];
+  /**
+   * The flows still running as it was read — a page-load flow waiting out a delay: what it holds may change yet, and a
+   * reading of the state taken now is told from one taken once every flow has ended.
+   */
+  running: DevToolsRunningFlow[];
   state?: unknown;
   /** Every source by its full name, with the shape of what it holds now. */
   sources?: Record<string, unknown>;
@@ -58,7 +70,7 @@ export const readDevToolsInPage = ({ state, element }: DevToolsInput): DevToolsR
     return typeof method === 'function' ? Reflect.apply(method, inspector, args) : undefined;
   };
   if (typeof inspector !== 'object' || inspector === null) {
-    return { available: false, flows: [], serverFailures: {} };
+    return { available: false, flows: [], running: [], serverFailures: {} };
   }
 
   // Inside the serialised function: nothing outside it reaches the page.
@@ -68,13 +80,20 @@ export const readDevToolsInPage = ({ state, element }: DevToolsInput): DevToolsR
     typeof Reflect.get(value, 'trigger') === 'string' &&
     typeof Reflect.get(value, 'status') === 'string' &&
     Array.isArray(Reflect.get(value, 'steps'));
+  const isRunning = (value: unknown): value is DevToolsRunningFlow =>
+    typeof value === 'object' &&
+    value !== null &&
+    typeof Reflect.get(value, 'trigger') === 'string' &&
+    typeof Reflect.get(value, 'ms') === 'number';
   const flows = call('flows', 50);
+  const running = call('running');
   const sources = state ? call('sources') : undefined;
   const failures = call('serverFailures');
 
   return {
     available: true,
     flows: Array.isArray(flows) ? flows.filter(isFlow) : [],
+    running: Array.isArray(running) ? running.filter(isRunning) : [],
     serverFailures:
       typeof failures === 'object' && failures !== null
         ? Object.fromEntries(

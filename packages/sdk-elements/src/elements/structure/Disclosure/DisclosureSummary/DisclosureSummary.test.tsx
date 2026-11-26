@@ -24,10 +24,12 @@ const entry = elementEntry('summary', {
   }
 });
 
-const drawn = (marker?: boolean) =>
+const drawn = (marker?: boolean, label?: string) =>
   render(
     <ElementContext value={entry}>
-      <DisclosureSummary marker={marker}>Can I cancel?</DisclosureSummary>
+      <DisclosureSummary marker={marker} label={label}>
+        Can I cancel?
+      </DisclosureSummary>
     </ElementContext>
   ).container;
 
@@ -41,5 +43,11 @@ describe('DisclosureSummary', () => {
 
   it('draws no marker when told, for a sign of its own', () => {
     expect(drawn(false).querySelector('.plitzi-component__disclosure-marker')).toBeNull();
+  });
+
+  // A menu's burger: an icon alone, named by its label — its words name it otherwise, and no empty name is written.
+  it('is named by its label when it has one, and by its words when not', () => {
+    expect(drawn(false, 'Menu').querySelector('summary')?.getAttribute('aria-label')).toBe('Menu');
+    expect(drawn(false).querySelector('summary')?.hasAttribute('aria-label')).toBe(false);
   });
 });

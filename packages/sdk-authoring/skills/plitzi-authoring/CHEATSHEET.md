@@ -135,7 +135,7 @@ Each comes with its code in brackets; reference/authoring-errors.md has a row fo
 | `tablet-rule-skips-mobile` | the rule under `compact` |
 | `colour-without-dark` | `{ light, dark, default }` |
 | `click-on-static-element` | the flow on a `button` (it holds children) or a `link` |
-| `image-without-alt` / `control-without-name` | `alt` or `decorative: true`; `title` on an icon button |
+| `image-without-alt` / `control-without-name` | `alt` or `decorative: true`; `label` on an icon button |
 | `anchor-missing` | the `anchor` on the section the `hash` names |
 
 ## Recipes

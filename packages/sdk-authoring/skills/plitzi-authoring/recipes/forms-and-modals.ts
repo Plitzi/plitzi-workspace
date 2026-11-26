@@ -55,7 +55,7 @@ export const recipe: SpaceSpec = {
                 text('What the modal says.'),
                 button({
                   content: '',
-                  title: 'Close',
+                  label: 'Close',
                   icon: 'fa-solid fa-xmark',
                   flows: [[onClick(), closeModal('details')]]
                 })

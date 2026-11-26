@@ -225,7 +225,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `condition-starts-visible` | a computed visibility that shows until its data answers | `visible: { source, template }` |
 | `control-in-decorative` | a control inside a `decorative` container — Tab lands on something nothing announces | move it out of the illustration |
-| `control-without-name` | a button or a link with no words, or a field nothing names | `title` on the button, `label` on the link, `label` (with `hideLabel: true`) on the field |
+| `control-without-name` | a button, a link or a disclosure’s summary with no words, or a field nothing names | `label` on the control (a button’s `title` adds the tooltip), `label` (with `hideLabel: true`) on the field |
 | `controls-no-anchor` | a button's `controls` naming no anchor — `aria-controls` points at nothing | an `anchor` on the element it shows and hides, and `controls` naming it |
 | `countdown-units` | a `countdown` whose `smallest` unit is larger than its `largest` — it says the `largest` alone | `largest` the larger: `largest: 'days', smallest: 'minutes'` |
 | `countdown-without-end` | a `countdown` with no `to` and no `timeWindow` around it with an `endsAt` — it shows zeros | `to: '2026-12-01T09:00:00Z'`, or the countdown inside the `timeWindow` whose end it counts to |

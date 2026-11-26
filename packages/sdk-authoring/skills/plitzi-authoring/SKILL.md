@@ -38,8 +38,8 @@ A change to a space on Plitzi itself — the builder's — is the Plitzi MCP ser
 4. **Before saying done:** `npm run lint:space` clean, and the [review checklist](reference/review-checklist.md).
 
 What a name means — an element, a step, a trigger, a code, any `@plitzi` export (`pageFamily`, `createServer`): `npx plitzi explain
-<name>`, in a few lines; whether there is a way at all — a field an element publishes, a state — `npx plitzi explain
---search "<words>"`. Never read the `.d.ts`.
+<name>`, in a few lines; whether there is a way at all — a field an element publishes, a state — the words themselves,
+quoted: `npx plitzi explain "<words>"`. Never read the `.d.ts`.
 
 ## Five rules authoring cannot check for you
 
@@ -60,7 +60,7 @@ Start with [the cheatsheet](CHEATSHEET.md), then only what the task names:
 
 | The task | Read |
 | --- | --- |
-| A site — landing, catalogue, blog | [elements-and-styles](reference/elements-and-styles.md), [layouts](reference/layouts.md), [components](reference/components.md), [lists](reference/lists.md) |
+| A site — landing, catalogue, blog | [elements-and-styles](reference/elements-and-styles.md), [structure](reference/structure.md), [layouts](reference/layouts.md), [components](reference/components.md), [lists](reference/lists.md), [colours-and-motion](reference/colours-and-motion.md) |
 | An app with state and actions | [data-and-visibility](reference/data-and-visibility.md), [templates](reference/templates.md), [flows](reference/flows.md) |
 | A component of your own | [plugins](reference/plugins.md) |
 | A whole working file to copy | [recipes](reference/recipes.md) |

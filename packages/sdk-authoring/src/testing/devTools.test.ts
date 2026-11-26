@@ -29,6 +29,7 @@ describe('the dev tools, read from the page', () => {
     vi.stubGlobal('window', {
       __plitzi: {
         flows: () => [failed, { nonsense: true }],
+        running: () => [{ trigger: 'Step the demo [onPageLoad]', on: 'home', ms: 400 }, { trigger: 3 }],
         state: () => ({ category: 'paper' }),
         sources: () => ({ apiContainer_site: { data: {} } }),
         element: (id: string) => ({ id, visible: true }),
@@ -39,6 +40,7 @@ describe('the dev tools, read from the page', () => {
     expect(readDevToolsInPage({ state: true, element: 'count' })).toEqual({
       available: true,
       flows: [failed],
+      running: [{ trigger: 'Step the demo [onPageLoad]', on: 'home', ms: 400 }],
       state: { category: 'paper' },
       sources: { apiContainer_site: { data: {} } },
       element: { id: 'count', visible: true },
@@ -49,6 +51,11 @@ describe('the dev tools, read from the page', () => {
   it('says there is nothing to read on a page without its dev tools', () => {
     vi.stubGlobal('window', {});
 
-    expect(readDevToolsInPage({ state: true })).toEqual({ available: false, flows: [], serverFailures: {} });
+    expect(readDevToolsInPage({ state: true })).toEqual({
+      available: false,
+      flows: [],
+      running: [],
+      serverFailures: {}
+    });
   });
 });

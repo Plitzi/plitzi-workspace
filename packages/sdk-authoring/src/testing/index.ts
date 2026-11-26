@@ -9,7 +9,14 @@ export type { ActionAnswer, AnsweredRequest, AnsweredRoute, AnswerActionOptions,
 export { dataIssues } from './dataIssues';
 export type { DataIssue, DataIssueCode, DataIssuesOptions, DataReport } from './dataIssues';
 export { failedFlowText, readDevTools, readDevToolsInPage } from './devTools';
-export type { DevToolsDriver, DevToolsFlow, DevToolsFlowStep, DevToolsInput, DevToolsReport } from './devTools';
+export type {
+  DevToolsDriver,
+  DevToolsFlow,
+  DevToolsFlowStep,
+  DevToolsInput,
+  DevToolsReport,
+  DevToolsRunningFlow
+} from './devTools';
 export { inspectDocument, inspectPage } from './inspect';
 export type { DocumentChecks, InspectOptions, PageEvaluator, PageIssue, PageIssueCode, PageReport } from './inspect';
 export { onScreen, onScreenIfChosen } from './onScreen';

@@ -16,6 +16,7 @@ import { oneColourCanvases } from './canvases';
 import { clickEffects, selectorOf } from './click';
 import { flushEdgesInPage, missedExpectations, sightSaid, textsInPage, wrappedLabelsInPage } from './expect';
 import { listRows } from './lists';
+import { notAuthoredReport } from './notAuthored';
 import { splitRefusals } from './refusals';
 import { serverFailedIssues } from './serverFailures';
 import {
@@ -35,7 +36,7 @@ import { faintTexts, textGrounds } from './themes';
 import { LONG_TASKS, projectSettling } from '../../../browser';
 import { playedOn } from '../shot/steps';
 import { prepareVisit, spaceFailureOn } from '../visit';
-import { notAuthoredReport } from './notAuthored';
+import { RUNNING_WAIT_MS, readOnceFlowsEnd } from './running';
 
 import type { Account } from './account';
 import type { VisitView } from '../visit';
@@ -304,7 +305,7 @@ const inspectHere = async (
   const report =
     handles && pageId ? await inspectPage(page, handles, { page: pageId, ...withheld }) : await inspectDocument(page);
   // The sources always: what the bindings read is held against them. Printed only when asked.
-  const devTools = await readDevTools(page, { state: true });
+  const devTools = await readOnceFlowsEnd(page, asked.state ? RUNNING_WAIT_MS : 0);
   // A phone has no pointer: a hover is looked at where one is, never failed where the element is laid out for a finger.
   const clicked =
     click === undefined
@@ -518,6 +519,7 @@ const inspectHere = async (
     ...(!asked.state || shown.state === undefined
       ? {}
       : { state: asked.stateOf && isRecord(shown.state) ? namedOf(shown.state, asked.stateOf) : shown.state }),
+    ...(asked.state && shown.running.length > 0 ? { running: shown.running } : {}),
     ...(!asked.state || shown.sources === undefined
       ? {}
       : { sources: asked.stateOf ? namedOf(shown.sources, asked.stateOf) : shown.sources }),

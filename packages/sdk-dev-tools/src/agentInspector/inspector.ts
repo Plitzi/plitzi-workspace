@@ -6,6 +6,7 @@ import type { FlowRun } from './flowRuns';
 import type { ElementReport } from './report';
 import type { DevStore } from '@plitzi/nexus';
 import type { SignedInTestAccount } from '@plitzi/sdk-shared';
+import type { RunningFlow } from '@plitzi/sdk-shared/devTools';
 
 /** `window.__plitzi`: the page's state, data, elements and flows, in text, for whoever cannot read the panel. */
 export type AgentInspector = {
@@ -25,6 +26,11 @@ export type AgentInspector = {
   setAttribute: (path: string, value: unknown) => string | false | Refused;
   element: (id: string) => ElementReport | undefined;
   flows: (limit?: number) => FlowRun[];
+  /**
+   * The flows on their way now — what fired each, on what, and for how long — so a reading of the state taken while
+   * one waits out a `delay` is told from one taken once every flow has ended.
+   */
+  running: () => { trigger: string; on?: string; ms: number }[];
   /** Why each server element failed on the page server since the page loaded, by id — answered later or not. */
   serverFailures: () => Record<string, unknown>;
   watch: (on?: boolean) => string;
@@ -68,6 +74,9 @@ export type AgentInspectorOptions = {
   stores: () => readonly DevStore[];
   /** The flows that ran, newest last. */
   runs: () => readonly FlowRun[];
+  /** The flows running now, the oldest first, and the page's clock they started on. */
+  runningFlows: () => readonly RunningFlow[];
+  now: () => number;
   /** Whether each flow is said in the console as it ends. */
   setWatching: (on: boolean) => void;
   /** The sources an element sees, by its id — its scope's, a list row's included: what its bindings read. */
@@ -89,6 +98,7 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
   element(id)          an element by its id, in a page or a component: type, attributes, what it reads and what each
                        binding gave it (resolved), its own state, the component it places, copies, on screen, box
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
+  running()            the flows on their way now — a page-load flow waiting out a delay — and for how long
   serverFailures()     why each server element failed on the page server since the page loaded, by id
   watch(on = true)     one console line per flow as it ends
   signInAs(account, path?) the visitor signed in as a journey's test account ({ id, email?, roles?, permissions? }) —
@@ -139,6 +149,8 @@ export const createAgentInspector = ({
   writeTestAccount,
   stores,
   runs,
+  runningFlows,
+  now,
   setWatching,
   elementSources,
   document
@@ -236,6 +248,12 @@ export const createAgentInspector = ({
   },
   element: id => elementReport(root.getState(), id, document, elementSources),
   flows: (limit = 20) => runs().slice(-limit),
+  running: () =>
+    runningFlows().map(({ trigger, on, since }) => ({
+      trigger,
+      ...(on === undefined ? {} : { on }),
+      ms: Math.max(0, Math.round(now() - since))
+    })),
   serverFailures: () => recordAt(root.getState(), 'rsc', 'failures'),
   watch: (on = true) => {
     setWatching(on);

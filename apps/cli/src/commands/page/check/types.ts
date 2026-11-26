@@ -163,6 +163,11 @@ export interface CheckReport {
    */
   shownFailures?: string[];
   state?: unknown;
+  /**
+   * The flows still running when the state was read, past the wait for them: what they hold may change yet — a state
+   * read meanwhile is not the page's last.
+   */
+  running?: { trigger: string; on?: string; ms: number }[];
   sources?: Record<string, unknown>;
   /**
    * With `--element`, by id: what each reads and holds, as the dev tools have it, and how its classes meet on it at rest

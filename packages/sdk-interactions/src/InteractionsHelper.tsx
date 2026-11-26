@@ -2,7 +2,7 @@ import { get, omit } from '@plitzi/plitzi-ui/helpers';
 
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/conditions';
 import { ruleValuesOf } from '@plitzi/sdk-shared/conditions';
-import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { flowStarted, pConsole } from '@plitzi/sdk-shared/devTools';
 import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { coerceDeclaredParams } from './helpers/coerceDeclaredParams';
@@ -360,16 +360,28 @@ const flowTrigger = async (
     return;
   }
 
-  const nodesProcessed = await flowCallbacks(
-    triggerNode,
-    nodes,
-    callbacksAvailables,
-    flowParams,
-    readGlobals,
-    postCallbacksTotal,
-    {},
-    { hostElementId, ...(signal ? { signal } : {}) }
-  );
+  // Running until its last step: what a reading of the page taken meanwhile says is still on its way (`flowsRunning`).
+  const ended = flowStarted({
+    trigger: `${triggerNode.title} [${triggerNode.action}]`,
+    ...(hostElementId ? { on: hostElementId } : {}),
+    since: startTime
+  });
+  let nodesProcessed: Awaited<ReturnType<typeof flowCallbacks>>;
+  try {
+    nodesProcessed = await flowCallbacks(
+      triggerNode,
+      nodes,
+      callbacksAvailables,
+      flowParams,
+      readGlobals,
+      postCallbacksTotal,
+      {},
+      { hostElementId, ...(signal ? { signal } : {}) }
+    );
+  } finally {
+    ended();
+  }
+
   storeLog(triggerNode, startTime, nodesProcessed, flowStatus(nodesProcessed), hostElementId);
 };
 

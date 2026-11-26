@@ -137,8 +137,15 @@ describe('window.__plitzi', () => {
     writeTestAccount,
     stores: () => [provider],
     runs: () => runs,
+    runningFlows: () => [{ trigger: 'Step the demo [onPageLoad]', on: 'home', since: 1000 }],
+    now: () => 3400,
     setWatching,
     document
+  });
+
+  // A reading of the state taken while a page-load flow waits out a delay is told apart: the flow is said, and how long.
+  it('says the flows on their way now, what fired each, on what and for how long', () => {
+    expect(inspector.running()).toEqual([{ trigger: 'Step the demo [onPageLoad]', on: 'home', ms: 2400 }]);
   });
 
   // A journey that plays as one of the space's test accounts: the page's visitor, signed in, with no session.
@@ -162,6 +169,8 @@ describe('window.__plitzi', () => {
       writeTestAccount: vi.fn(),
       stores: () => [],
       runs: () => [],
+      runningFlows: () => [],
+      now: () => 0,
       setWatching: vi.fn(),
       document
     });
@@ -181,6 +190,8 @@ describe('window.__plitzi', () => {
       writeTestAccount: () => order.push('signed in'),
       stores: () => [],
       runs: () => [],
+      runningFlows: () => [],
+      now: () => 0,
       setWatching: vi.fn(),
       document
     });
@@ -219,6 +230,8 @@ describe('window.__plitzi', () => {
       writeTestAccount: vi.fn(),
       stores: () => [chart],
       runs: () => runs,
+      runningFlows: () => [],
+      now: () => 0,
       setWatching,
       document
     });
@@ -279,6 +292,8 @@ describe('window.__plitzi', () => {
         writeTestAccount: vi.fn(),
         stores: () => order,
         runs: () => runs,
+        runningFlows: () => [],
+        now: () => 0,
         setWatching,
         document
       });
@@ -309,6 +324,8 @@ describe('window.__plitzi', () => {
       writeTestAccount: vi.fn(),
       stores: () => [],
       runs: () => runs,
+      runningFlows: () => [],
+      now: () => 0,
       setWatching,
       document
     });
@@ -333,6 +350,8 @@ describe('window.__plitzi', () => {
       writeTestAccount: vi.fn(),
       stores: () => [],
       runs: () => runs,
+      runningFlows: () => [],
+      now: () => 0,
       setWatching,
       document
     });
@@ -367,6 +386,8 @@ describe('window.__plitzi', () => {
       writeTestAccount: vi.fn(),
       stores: () => [provider],
       runs: () => runs,
+      runningFlows: () => [],
+      now: () => 0,
       setWatching,
       elementSources: id => (id === 'cart' ? { state: { count: 7 } } : undefined),
       document
@@ -428,6 +449,8 @@ describe('window.__plitzi', () => {
       writeTestAccount: vi.fn(),
       stores: () => [],
       runs: () => runs,
+      runningFlows: () => [],
+      now: () => 0,
       setWatching,
       document
     });

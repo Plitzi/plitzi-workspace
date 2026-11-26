@@ -12,6 +12,18 @@ import type { CheckAsk, CheckReport, ClickReport } from './types';
  */
 
 /** What the page holds, when it was asked for: one compact line each, the shape of a source rather than its rows. */
+/**
+ * The flows still running when the state was read: the state above may change yet. Said beside it, with how a reading
+ * waits them out — a state `{}` with nothing beside it was taken for a page-load flow that never ran.
+ */
+const runningLine = (running: NonNullable<CheckReport['running']>): string => {
+  const named = running.map(
+    flow => `${flow.trigger}${flow.on ? ` on ${flow.on}` : ''} (${(flow.ms / 1000).toFixed(1)} s)`
+  );
+
+  return `  · ${String(running.length)} flow${running.length === 1 ? '' : 's'} still running — the state above may change yet: ${named.join(', ')}; --steps "wait <s>s" reads it later`;
+};
+
 const heldText = (report: CheckReport, asked: CheckAsk): string[] => {
   if (!asked.state && asked.elements.length === 0) {
     return [];
@@ -23,6 +35,7 @@ const heldText = (report: CheckReport, asked: CheckAsk): string[] => {
 
   return [
     ...(report.state === undefined ? [] : [`  · state ${JSON.stringify(report.state)}`]),
+    ...(report.running === undefined ? [] : [runningLine(report.running)]),
     // One named is read whole, every key with its value: its shape alone cut the very keys a run's tester asked for.
     ...Object.entries(report.sources ?? {}).map(
       ([name, value]) => `  · source ${name}: ${asked.stateOf ? valuesOf(value) : shapeOf(value)}`
