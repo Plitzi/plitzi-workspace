@@ -8,20 +8,20 @@
   }
 
   .plitzi-component__table-caption {
-    text-align: left;
     padding-bottom: 8px;
+    text-align: left;
   }
 
   .plitzi-component__table-head {
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
     border-bottom-color: currentColor;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
   }
 
   .plitzi-component__table-row {
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
     border-bottom-color: rgba(127, 127, 127, 0.25);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
   }
 
   .plitzi-component__table-column {
