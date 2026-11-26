@@ -141,10 +141,10 @@ The space is not written until these are fixed.
 | `redirect-target-unknown` | a page that sends visitors it is not for to a page the space does not have | a page's id or slug (`''` is the home page), or a full URL |
 | `robots-txt-line` | a line of the space's `settings.robotsTxt` that no crawler reads, or one with no `User-agent` | `User-agent: *` then `Allow: /`, `Disallow: /overlay` — each line `Field: value`, or a comment |
 | `robots-unknown` | a page's `robots` with a directive no search engine reads, or none | `robots: 'noindex'`, `'noindex, nofollow'` — or leave it out, and the page is indexed |
-| `row-and-children` | a list with a `row` and `children` — the row is what it renders | one of the two |
+| `row-and-children` | a list or a table with a `row` and `children` — the row is what it renders, a table’s its columns | one of the two |
 | `row-component` | a list's `row` naming a component the space does not declare, or one with no prop to take the row | a declared component with an `item` prop — or a single prop — for the row |
-| `row-outside-list` | `row` on an element that is not a list | a `list` around it |
-| `row-without-id` | a list whose `row` is a function, with no `id` — the row's sources are named after it | `list({ id: 'products', items, row: r => … })` |
+| `row-outside-list` | `row` on an element that is not a list, a carousel or a table | a `list` (or a `table`) around it |
+| `row-without-id` | a list, a carousel or a table whose `row` is a function, with no `id` — the row's sources are named after it | `list({ id: 'products', items, row: r => … })` |
 | `rule-set-mixed` | a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css` | `{ css: { desktop: { … } }, states: { hover: { … } } }` — the rules under `css`, each of the others beside it |
 | `selector-invalid` | a `selector` that is not a CSS class name | letters, digits, `-` and `_` |
 | `selector-taken` | a `selector` that is a declared class, or another element's | `class` to share rules; a selector of an element's own is its alone |
@@ -182,7 +182,7 @@ The space is not written until these are fixed.
 | `style-state-unknown` | a state a selector does not react to | one of the states it lists (`hover`, `focus`, `active`…) |
 | `svg-not-svg` | an `svg` whose `content` is not one `<svg>…</svg>` — it draws nothing | the SVG markup alone; HTML around it goes in a `blockHtml` |
 | `template-in-value` | a `{{ }}` inside an attribute that is an object or a list — a provider's `input`, a list's `items`, a plugin's settings: only an attribute that is text is evaluated | a binding on the attribute (`bindTemplate(name, source, template, { returns: 'value' })`); for a provider's `input`, nothing for a route or query param — the action is already handed them as `input.<name>` |
-| `template-short-source` | a source named without its prefix inside a template or a step | the full name: `apiContainer_stats`, `list_rows` — a list's row, `r.inTemplate.item` |
+| `template-short-source` | a source named without its prefix inside a template or a step | the full name: `apiContainer_stats`, `list_rows` — a list's row is `r.item`, completed in a template too |
 | `template-source-out-of-scope` | a template reading the source of an element it is not inside | move the element inside it, or share the value through `state` |
 | `template-text-into-value` | a template, which renders text, feeding an attribute that holds a list or an object | `bindTemplate('items', source, '{{ … }}', { returns: 'value' })` |
 | `template-unknown-name` | a name in a template that is not a source, a variable or a route param | the full source name (`list_rows.item`), `navigation.queryParams.x`, or `source` for the bound value |

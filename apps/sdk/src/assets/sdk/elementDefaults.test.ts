@@ -195,6 +195,12 @@ const STYLESHEET: Record<string, SlotRules> = {
   link: root('.plitzi-component__link', { icon: [] }),
   list: root('.plitzi-component__list'),
   listItem: root('.plitzi-component__list-item'),
+  table: root('.plitzi-component__table', {
+    caption: ['.plitzi-component__table-caption'],
+    head: ['.plitzi-component__table-head'],
+    row: ['.plitzi-component__table-row']
+  }),
+  tableColumn: root('.plitzi-component__table-column', { header: ['.plitzi-component__table-header'] }),
   loading: root('.plitzi-component__loading'),
   markdown: root('.plitzi-component__markdown'),
   modalContainer: root('.plitzi-component__modal-container', {

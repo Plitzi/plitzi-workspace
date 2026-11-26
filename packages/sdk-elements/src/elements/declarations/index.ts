@@ -52,6 +52,8 @@ import TabContainerDeclaration from '../structure/TabContainer/declaration';
 import TabContainerBodyDeclaration from '../structure/TabContainer/TabContainerBody/declaration';
 import TabContainerHeaderDeclaration from '../structure/TabContainer/TabContainerHeader/declaration';
 import TabContainerItemDeclaration from '../structure/TabContainer/TabContainerItem/declaration';
+import TableDeclaration from '../structure/Table/declaration';
+import TableColumnDeclaration from '../structure/Table/TableColumn/declaration';
 import TimeWindowDeclaration from '../structure/TimeWindow/declaration';
 import VariantsDeclaration from '../structure/Variants/declaration';
 import VariantItemDeclaration from '../structure/Variants/VariantItem/declaration';
@@ -86,6 +88,8 @@ export const elementDeclarations = {
   Link: LinkDeclaration,
   List: ListDeclaration,
   ListItem: ListItemDeclaration,
+  Table: TableDeclaration,
+  TableColumn: TableColumnDeclaration,
   Loading: LoadingDeclaration,
   Markdown: MarkdownDeclaration,
   ModalContainer: ModalContainerDeclaration,
@@ -143,6 +147,8 @@ export {
   LinkDeclaration,
   ListDeclaration,
   ListItemDeclaration,
+  TableDeclaration,
+  TableColumnDeclaration,
   LoadingDeclaration,
   MarkdownDeclaration,
   ModalContainerDeclaration,

@@ -156,13 +156,11 @@ export const sourceName = (value: SourceName): string => {
 
 /**
  * The row of a list fed by a typed source: its item as the sample's item, its position as a number — both already the
- * full names a template reads (`` `{{ ${r.item.slug} }}` ``), and `inTemplate` the same names as text, as an untyped
- * row has them.
+ * full names a template reads (`` `{{ ${r.item.slug} }}` ``).
  */
 export interface SourceRow<Item> {
   item: SourcePath<Item>;
   index: SourcePath<number>;
-  inTemplate: { item: string; index: string };
 }
 
 /** The row of the list whose rows publish `listSource` (`list_products`), its items what the path `items` leads to. */
@@ -172,8 +170,7 @@ export const sourceRow = <Item>(listSource: string, items: SourcePath<readonly I
   // A proxy answers any key at all; what makes these the row's types is the sample, checked as each key is read.
   return {
     item: pathTo(`${listSource}.item`, Array.isArray(shape) ? itemShape(shape) : UNKNOWN),
-    index: pathTo(`${listSource}.index`, 0),
-    inTemplate: { item: `${listSource}.item`, index: `${listSource}.index` }
+    index: pathTo(`${listSource}.index`, 0)
   } as SourceRow<Item>;
 };
 

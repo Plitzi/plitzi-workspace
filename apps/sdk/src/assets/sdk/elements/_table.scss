@@ -1,0 +1,36 @@
+// A table's defaults, the ones its declaration says (`sdk-elements` Table and TableColumn): a readable table before any
+// class of the space's own — full width, its cells apart, a rule under its head and under each row.
+@mixin styles {
+  .plitzi-component__table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .plitzi-component__table-caption {
+    text-align: left;
+    padding-bottom: 8px;
+  }
+
+  .plitzi-component__table-head {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: currentColor;
+  }
+
+  .plitzi-component__table-row {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: rgba(127, 127, 127, 0.25);
+  }
+
+  .plitzi-component__table-column {
+    padding: 8px 12px;
+    vertical-align: top;
+  }
+
+  .plitzi-component__table-header {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}

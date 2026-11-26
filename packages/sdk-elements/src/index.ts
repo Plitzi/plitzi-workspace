@@ -40,6 +40,7 @@ export const defaultElements = {
   text: elements.Text,
   themeToggle: elements.ThemeToggle,
   list: elements.List,
+  table: elements.Table,
   link: elements.Link,
   markdown: elements.Markdown,
   richText: elements.RichText,

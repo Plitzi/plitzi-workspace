@@ -31,14 +31,18 @@ describe('a list', () => {
     const rows = list({
       id: 'rows',
       items: 'state.rows',
-      row: r => button({ content: '', title: `Row {{ ${r.inTemplate.index} }}`, from: `${r.item}.label` })
+      row: r => button({ content: '', title: `Row {{ ${r.index} }}`, from: `${r.item}.label` })
     });
 
     const [row] = rows.children ?? [];
 
     expect(rows.children).toHaveLength(1);
     expect(row.from).toBe('rows.item.label');
-    expect(row.attributes?.title).toBe('Row {{ list_rows.index }}');
+    // Written short, as a binding names the row — and completed in the template as the space is authored.
+    expect(row.attributes?.title).toBe('Row {{ rows.index }}');
+    const { schema } = authorSpace(space([rows]));
+    const drawn = Object.values(schema.flat).find(element => element.definition.type === 'button');
+    expect(drawn?.attributes.title).toBe('Row {{ list_rows.index }}');
   });
 
   it('places a component per row with the row bound to its item — the instance component() writes', () => {

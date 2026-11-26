@@ -65,7 +65,7 @@ describe('source', () => {
           children: [
             heading({ from: 'site.data.hero.title' }),
             text({ bind: { content: 'site.data.hero.subtitle' } }),
-            list({ id: 'grid', items: 'site.data.grid', row: r => text({ from: `${r.inTemplate.item}.title` }) })
+            list({ id: 'grid', items: 'site.data.grid', row: r => text({ from: `${r.item}.title` }) })
           ]
         })
       ])
@@ -87,7 +87,7 @@ describe('source', () => {
       items: site.data.grid,
       row: g =>
         text({
-          content: `{{ ${g.inTemplate.item}.title }}`,
+          content: twig`{{ ${g.item}.title }}`,
           bind: [bindTemplate('title', g.item.title, '{{ source|upper }}'), hiddenWhen(g.item.badge)]
         })
     });

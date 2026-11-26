@@ -8,6 +8,7 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | Data typed by a sample of it: completed and checked paths, typed rows | [recipes/typed-data.ts](../recipes/typed-data.ts) |
 | Data read by the page server (`--mode server`) | [recipes/server-data.ts](../recipes/server-data.ts) |
 | An accordion, one answer open at a time | [recipes/accordion.ts](../recipes/accordion.ts) |
+| A table of data: a row per item, a column shown from the state, a row's link built from it | [recipes/table.ts](../recipes/table.ts) |
 | Filter and sort a list from a select | [recipes/filter-a-list.ts](../recipes/filter-a-list.ts) |
 | A page per record (`/products/:slug`), and "not found" sent with 404 | [recipes/detail-page.ts](../recipes/detail-page.ts) |
 | Link to a section of a page (`/#plans`) | [recipes/link-to-a-section.ts](../recipes/link-to-a-section.ts) |

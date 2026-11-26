@@ -166,7 +166,10 @@ const unfilled = (type: string, attributes: Record<string, unknown>): Record<str
 const inferred = (type: string, attributes: Record<string, unknown>): Record<string, unknown> =>
   type === 'link' && !Object.hasOwn(attributes, 'mode') ? { mode: inferredLinkMode(attributes.href) } : {};
 
-/** A list's row by its names: short in a binding or `from`, spelled in full in a template or an attribute's token. */
+/**
+ * A list's row by its names — one name each, wherever it is read: a binding, `from`, a template or an attribute's
+ * token (a template's is completed to the row's source in full, `list_rows.item`, as it is authored).
+ */
 export interface ListRow {
   /** The list's own name, as the space knows it. */
   list: string;
@@ -176,19 +179,16 @@ export interface ListRow {
   item: string;
   /** Its position: `rows.index`. */
   index: string;
-  /** The same names in full, for a template or an attribute token: `{{ list_rows.item.slug }}`. */
-  inTemplate: { item: string; index: string };
 }
 
-/** What repeats its children once per item: a list, and a carousel's slides. */
-type Repeater = 'list' | 'carousel';
+/** What repeats its children once per item: a list, a carousel's slides, and a table's rows. */
+type Repeater = 'list' | 'carousel' | 'table';
 
 const listRow = (id: string, kind: Repeater): ListRow => ({
   list: id,
   source: `${kind}_${id}`,
   item: `${id}.item`,
-  index: `${id}.index`,
-  inTemplate: { item: `${kind}_${id}.item`, index: `${kind}_${id}.index` }
+  index: `${id}.index`
 });
 
 /**
@@ -225,11 +225,12 @@ const listShape = (
     return { ...shaped, ...(children === undefined ? {} : { children }) };
   }
 
-  // A carousel's other children are its controls, beside the track its slides go in; a list's row IS its children.
-  if (kind === 'list' && children !== undefined) {
+  // A carousel's other children are its controls, beside the track its slides go in; a list's row IS its children, and
+  // so are a table's columns.
+  if (kind !== 'carousel' && children !== undefined) {
     throw new AuthoringError(
       'row-and-children',
-      'A list with a `row` takes no `children`: the row IS what it renders.'
+      `A ${kind} with a \`row\` takes no \`children\`: the row IS what it renders${kind === 'table' ? ' — its columns' : ''}.`
     );
   }
 
@@ -246,7 +247,7 @@ const listShape = (
 
   const written = row(listRow(id, kind));
   const rows = Array.isArray(written) ? written : [written];
-  if (kind === 'list') {
+  if (kind !== 'carousel') {
     return { ...shaped, children: rows };
   }
 
@@ -305,11 +306,14 @@ const buildSpec = (
   const visible = givenVisible === undefined ? undefined : visibleOf(givenVisible);
 
   const list =
-    type === 'list' || type === 'carousel'
+    type === 'list' || type === 'carousel' || type === 'table'
       ? listShape(type, id, attributes, bind, row, children, from !== undefined)
       : undefined;
   if (row !== undefined && !list) {
-    throw new AuthoringError('row-outside-list', `A "${type}" has no rows: \`row\` is a list's or a carousel's.`);
+    throw new AuthoringError(
+      'row-outside-list',
+      `A "${type}" has no rows: \`row\` is a list's, a carousel's or a table's.`
+    );
   }
 
   return markWrittenAt({

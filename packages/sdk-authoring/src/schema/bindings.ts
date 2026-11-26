@@ -145,6 +145,28 @@ export interface VisibleCondition {
   template: string;
 }
 
+/** What a visibility compares its source with: `visibleIf('state.step', '>=', 2)`. */
+export type VisibleComparison = '==' | '!=' | '>' | '>=' | '<' | '<=';
+
+/** A value as a template writes it: a text quoted, its quotes escaped; a number or a yes/no as it is. */
+const twigLiteral = (value: string | number | boolean): string =>
+  typeof value === 'string' ? `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'` : String(value);
+
+/**
+ * The visibility most conditions are: shown once a source compares so with a value — `visible: visibleIf('state.step',
+ * '>=', 2)` — and hidden while the source has none yet. It writes the condition a `{ source, template }` is
+ * (`{{ source is defined and source >= 2 }}`); anything more — two sources, a row and the state — is that form written
+ * out.
+ */
+export const visibleIf = (
+  source: SourceName,
+  comparison: VisibleComparison,
+  value: string | number | boolean
+): VisibleCondition => ({
+  source: sourceName(source),
+  template: `{{ source is defined and source ${comparison} ${twigLiteral(value)} }}`
+});
+
 /** What a binding's template hands its attribute: its rendered text, or the value of its one `{{ expression }}`. */
 export type TemplateReturns = 'text' | 'value';
 

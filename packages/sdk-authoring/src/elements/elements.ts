@@ -104,6 +104,50 @@ export function list(first?: ListProps | TypedListProps<unknown> | ElementSpec[]
   });
 }
 export const listItem = defineElement(elementDeclarations.ListItem);
+
+type TableAttributes = AttributesOf<typeof elementDeclarations.Table>;
+
+type TableProps = ElementProps<Omit<TableAttributes, 'items'> & { items?: TableAttributes['items'] | string }>;
+
+/** A table fed by a typed source: its `row` is handed the item typed, and writes the columns. */
+type TypedTableProps<Item> = Omit<TableProps, 'items' | 'row'> & {
+  items: SourcePath<readonly Item[]>;
+  row?: string | RowWriter<SourceRow<Item>>;
+};
+
+const tableFactory = defineElement<Omit<TableAttributes, 'items'> & { items?: TableAttributes['items'] | SourceName }>(
+  elementDeclarations.Table
+);
+
+const isTypedTable = (props: TableProps | TypedTableProps<unknown>): props is TypedTableProps<unknown> =>
+  isSourcePath(props.items);
+
+/**
+ * A table of data: its `row` writes its columns — `tableColumn`s, each a `header` and the cell it draws with the row in
+ * hand — and its `items` are its rows, written out, a source's name or a typed source's path, as a list's:
+ *
+ * ```ts
+ * table({ id: 'plans', caption: 'Plans compared', items: site.data.plans, row: r => [
+ *   tableColumn({ header: 'Plan', rowHeader: true, children: [text({ from: r.item.name })] }),
+ *   tableColumn({ header: 'Price', children: [text({ from: r.item.price })] })
+ * ] })
+ * ```
+ */
+export function table<Item>(props: TypedTableProps<Item>): ElementSpec;
+export function table(props?: TableProps): ElementSpec;
+export function table(props?: TableProps | TypedTableProps<unknown>): ElementSpec {
+  if (props === undefined || !isTypedTable(props)) {
+    return tableFactory(props);
+  }
+
+  const { items, row } = props;
+
+  return tableFactory({
+    ...props,
+    row: typeof row === 'function' ? (named: ListRow) => row(sourceRow(named.source, items)) : row
+  });
+}
+export const tableColumn = defineElement(elementDeclarations.TableColumn);
 export const markdown = defineElement(elementDeclarations.Markdown);
 export const modalContainer = defineElement(elementDeclarations.ModalContainer);
 export const nodeHtml = defineElement(elementDeclarations.NodeHtml);

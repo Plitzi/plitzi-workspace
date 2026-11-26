@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
-import { activeOn, activeWhen, authorSpace, GLOBAL_SOURCES, resolveSource, variantFrom, withVisibility } from './index';
+import {
+  activeOn,
+  activeWhen,
+  authorSpace,
+  GLOBAL_SOURCES,
+  resolveSource,
+  variantFrom,
+  visibleIf,
+  withVisibility
+} from './index';
 import { apiContainer, list, scope, text } from '../elements';
 import { styles } from '../style';
 
@@ -287,5 +296,21 @@ describe('a source named outside the scope that prefixes its element', () => {
     expect(() => authorSpace({ name: 'S', permanentUrl: 's', pages: [page] })).toThrow(
       /In a scope it is "pet-luna-care": a `source\(\)` made outside `scope\(\)`/
     );
+  });
+});
+
+// The visibility most conditions are — a column shown from a step of the state on — was a `{ source, template }` with a
+// `source is defined` to remember each time (PZ-8).
+describe('visibleIf', () => {
+  it('writes the condition a source compared with a value is, hidden while the source has none', () => {
+    expect(visibleIf('state.step', '>=', 2)).toEqual({
+      source: 'state.step',
+      template: '{{ source is defined and source >= 2 }}'
+    });
+    expect(visibleIf('state.plan', '==', "team's")).toEqual({
+      source: 'state.plan',
+      template: "{{ source is defined and source == 'team\\'s' }}"
+    });
+    expect(visibleIf('state.open', '!=', false).template).toBe('{{ source is defined and source != false }}');
   });
 });

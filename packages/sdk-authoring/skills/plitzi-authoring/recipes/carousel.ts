@@ -92,9 +92,9 @@ export const recipe: SpaceSpec = {
                           class: dot,
                           bind: [
                             bindTemplate('title', r.index, 'Slide {{ source + 1 }}'),
-                            activeWhen(dot, `{{ ${r.inTemplate.index} == carousel_hero.index }}`)
+                            activeWhen(dot, `{{ ${r.index} == carousel_hero.index }}`)
                           ],
-                          flows: [[onClick(), carouselGoTo('hero', `{{ ${r.inTemplate.index} }}`)]]
+                          flows: [[onClick(), carouselGoTo('hero', `{{ ${r.index} }}`)]]
                         })
                       ]
                     })

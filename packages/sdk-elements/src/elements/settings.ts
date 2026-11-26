@@ -44,6 +44,8 @@ import TabContainer from './structure/TabContainer/Settings';
 import TabContainerBody from './structure/TabContainer/TabContainerBody/Settings';
 import TabContainerHeader from './structure/TabContainer/TabContainerHeader/Settings';
 import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings';
+import Table from './structure/Table/Settings';
+import TableColumn from './structure/Table/TableColumn/Settings';
 import TimeWindow from './structure/TimeWindow/Settings';
 import Variants from './structure/Variants/Settings';
 import VariantItem from './structure/Variants/VariantItem/Settings';
@@ -108,6 +110,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   nodeHtml: NodeHtml,
   list: List,
   listItem: ListItem,
+  table: Table,
+  tableColumn: TableColumn,
   link: Link,
   form: Form,
   formControl: FormControl,

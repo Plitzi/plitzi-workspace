@@ -86,18 +86,19 @@ export const ELEMENT_CODES = {
   },
   'row-and-children': {
     kind: 'refused',
-    means: 'a list with a `row` and `children` — the row is what it renders',
+    means: 'a list or a table with a `row` and `children` — the row is what it renders, a table’s its columns',
     fix: 'one of the two'
   },
   'row-without-id': {
     kind: 'refused',
-    means: "a list whose `row` is a function, with no `id` — the row's sources are named after it",
+    means:
+      "a list, a carousel or a table whose `row` is a function, with no `id` — the row's sources are named after it",
     fix: "`list({ id: 'products', items, row: r => … })`"
   },
   'row-outside-list': {
     kind: 'refused',
-    means: '`row` on an element that is not a list',
-    fix: 'a `list` around it'
+    means: '`row` on an element that is not a list, a carousel or a table',
+    fix: 'a `list` (or a `table`) around it'
   },
   'source-name-missing': {
     kind: 'refused',

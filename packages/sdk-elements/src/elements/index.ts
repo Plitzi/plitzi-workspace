@@ -43,6 +43,7 @@ import List from './structure/List';
 import ModalContainer from './structure/ModalContainer';
 import Pagination from './structure/Pagination';
 import TabContainer from './structure/TabContainer';
+import Table from './structure/Table';
 import TimeWindow from './structure/TimeWindow';
 import Variants from './structure/Variants';
 import Account from './user/Account';
@@ -82,6 +83,7 @@ export * from './structure/DialogContainer';
 export * from './structure/Disclosure';
 export * from './structure/FocusGroup';
 export * from './structure/List';
+export * from './structure/Table';
 export * from './structure/ModalContainer';
 export * from './structure/Pagination';
 export * from './structure/Carousel';
@@ -129,6 +131,7 @@ export {
   Text,
   ThemeToggle,
   List,
+  Table,
   Link,
   Markdown,
   Pagination,

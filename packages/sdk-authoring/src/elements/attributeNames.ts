@@ -466,6 +466,8 @@ export const elementAttributeNames = {
   tabContainerBody: [],
   tabContainerHeader: [],
   tabContainerItem: ['hash'],
+  table: ['caption', 'itemKey', 'items'],
+  tableColumn: ['header', 'rowHeader'],
   text: ['content', 'decorative', 'title'],
   themeToggle: ['darkLabel', 'lightLabel', 'showSystem', 'subType', 'systemLabel'],
   timeWindow: ['endsAt', 'startsAt'],

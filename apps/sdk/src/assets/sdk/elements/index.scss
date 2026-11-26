@@ -13,6 +13,7 @@
 @use './tab-container' as tabContainer;
 @use './variants' as variants;
 @use './disclosure' as disclosure;
+@use './table' as table;
 @use './countdown' as countdown;
 @use './avatar' as avatar;
 @use './account' as account;
@@ -56,6 +57,7 @@
   @include tabContainer.styles;
   @include variants.styles;
   @include disclosure.styles;
+  @include table.styles;
   @include countdown.styles;
   @include avatar.styles;
   @include account.styles;

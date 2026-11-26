@@ -2,7 +2,26 @@
 '@plitzi/cli': patch
 ---
 
-A disclosure's summary takes a name, and `page check --state` waits for the flows still on their way.
+A data table, a row named one way everywhere, a disclosure's summary that takes a name, and `page check --state` that
+waits for the flows still on their way.
+
+## Tables
+
+- **`table` and `tableColumn`**: a table of data, fed like a list — `items` written out, a source's name or a typed
+  path — its `row` writing its columns, each a `header` and the cell it draws with the row in hand. It draws a
+  `<table>`: its `caption`, a head of `<th scope="col">`, a row per item; a column with `rowHeader` names its row
+  (`<th scope="row">`). A column's `visible` takes it from the head and every row at once — a table whose columns change
+  with the state — and it is read as a table by a screen reader and a search engine, which rows of a grid are not. Its
+  rows publish `table_<id>` (`item`, `index`), as a list's do; its slots `caption`, `head`, `row`, a column's `header`.
+
+## A list's row
+
+- **`r.item` and `r.index` are a row's one name**, in a binding, `from` and a template alike: a template's is completed
+  to the row's source in full (`list_rows.item`) as the space is authored — a list's, a carousel's or a table's.
+- **`visibleIf(source, comparison, value)`**: the condition most visibilities are — `visibleIf('state.step', '>=', 2)` —
+  written as the `{ source, template }` it is, `source is defined` included.
+- **To redo:** `r.inTemplate` is gone (from a list's row and a typed one): write `r.item` / `r.index` where it said
+  `r.inTemplate.item` / `r.inTemplate.index` — the same text in a template, completed.
 
 ## Elements and authoring
 

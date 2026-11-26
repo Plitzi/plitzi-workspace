@@ -18,7 +18,7 @@ apiContainer({ id: site.id, query: '/data/home.json', children: [
   template through `twig` (a plain template literal writes the same text, but a type-checked lint refuses an object in
   one).
 - A list fed by a path hands its `row` the item typed: every field any item of the sample has — `p.item`, `p.index`,
-  and `p.inTemplate` as an untyped row has it, so turning a list typed changes none of its templates.
+  as an untyped row's are, so turning a list typed changes none of its templates.
 - **Only `items: <path>` types the row.** A list whose `items` are `from` + `as` (sorted, filtered — `as: '{{ source|sort(e
   => e.date)|reverse }}'`) or written out (`items: CATEGORIES`) hands an untyped row: its names are text, so a field is
   `` `${r.item}.date` ``, never `r.item.date` (undefined — refused `source-name-missing`). Need a sorted list typed? Sort

@@ -408,7 +408,7 @@ const checkStepTemplates = (
         if (prefix && !stepIds.has(root)) {
           ctx.error(
             'template-short-source',
-            `${where}: step "${node.id}" reads "{{ ${expression.trim()} }}". Inside a flow a source is named in full — write "${prefix}_${root}" where it says "${root}". (A binding completes the prefix; a flow's templates are read as written.)${prefix === 'list' ? ' A list’s row hands it in full: `r.inTemplate.item` (`${r.inTemplate.item}.id`), never its id by hand.' : ''}`,
+            `${where}: step "${node.id}" reads "{{ ${expression.trim()} }}". Inside a flow a source is named in full — write "${prefix}_${root}" where it says "${root}". (A binding completes the prefix; a flow's templates are read as written.)${prefix === 'list' ? ' A list’s row and its position are `r.item` and `r.index` — written in a template too, they are completed.' : ''}`,
             hostId
           );
         }

@@ -497,13 +497,14 @@ describe('lintSpace', () => {
 
       expect(errorsOf(documents)).toContain('template-short-source');
 
-      // A list's row, named short: pointed at the name a row hands a template, not at its id written by hand.
+      // A list's row, named short in a document written by hand: pointed at the full name, and at `r.item`, which
+      // authoring completes in a template.
       const row = withChange(({ schema }) => {
         addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'controlled', items: [{ title: 'A' }] } });
         schema.flat.hello.attributes.content = '{{ rows.item.title }}';
       });
       const refused = lintSpace(row).errors.find(issue => issue.code === 'template-short-source');
-      expect(refused?.message).toContain('r.inTemplate.item');
+      expect(refused?.message).toContain('`r.item` and `r.index`');
     });
 
     it('template-source-out-of-scope', () => {

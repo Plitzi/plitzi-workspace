@@ -16,8 +16,8 @@ list({ id: 'steps', subType: 'ol', children: [listItem({ children: [text('Mix')]
 
 `items` (or `from`) makes a list controlled: an array of its own, or the source its rows come from. `row` is what it renders once
 per item — a component's id (placed with the row bound to its `item` prop, or its only prop), or a function handed the
-row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item` for a template
-(`` `/games/{{ ${r.inTemplate.item}.slug }}` ``). A function needs the list's `id`, which names those sources. With
+row's names: `r.item` and `r.index`, in a binding, `from` and a template alike
+(`` `/games/{{ ${r.item}.slug }}` ``). A function needs the list's `id`, which names those sources. With
 `items` a typed source's path (`items: site.data.games`, see typed-sources.md), the row is typed too:
 `row: g => listItem({ children: [text({ from: g.item.title })] })`, and a field the sample's games lack is a type error.
 
@@ -41,9 +41,12 @@ row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item`
   reordered, a row's state (an open detail, a field's text) follows its item. Items named by another field say so —
   `itemKey: 'slug'` (`list-item-key-missing` warns when fixed items lack it). A row whose item changes mounts again,
   so a one-row list showing "the current slide" replays the slide's entrance animation.
-- **A data table** (a comparison, a product's specs) is a `markdown` element whose text is a table (`| a | b |`),
-  dressed through its slots `table`, `tableHead`, `tableRow`, `tableHeaderCell`, `tableCell`. There is no table
-  element: lists laid out as one read as no table to a screen reader or a search engine.
+- **A data table** — a comparison, leads, a product's specs — is a `table`, fed like a list, its `row` writing its
+  columns: `table({ id: 'plans', caption: 'Plans compared', items, row: r => [tableColumn({ header: 'Plan', rowHeader:
+  true, children: [text({ from: \`${r.item}.name\` })] }), tableColumn({ header: 'Seats', visible: visibleIf('state.showSeats',
+  '==', true), children: […] })] })`. A `<table>` with its head (`<th scope="col">`), read as one by a screen reader and a
+  search engine, which a grid of boxes is not; a column's `visible` takes it from the head and every row. Its slots:
+  `caption`, `head`, `row`; a column's `header`. Fixed words are still a `markdown` table (slots `table`, `tableHead`…).
 
 ## Filtering and sorting
 

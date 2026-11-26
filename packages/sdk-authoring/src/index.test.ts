@@ -391,10 +391,12 @@ describe('sources read inside a flow', () => {
     authoring.named('ran', authoring.runServerAction({ actionId: 'job-retry', input: { jobId } }));
 
   // The binding form is completed for the author; the same short name inside a template resolves to nothing.
-  it('refuses a source named the way a binding names it, and says the name it should have', () => {
-    expect(() => authoring.authorSpace(listWith([authoring.onClick(), retry('{{ jobRows.item.id }}')]))).toThrow(
-      /write "list_jobRows" where it says "jobRows"/
-    );
+  // A list's row is named as a binding names it, `r.item`, in a step too: completed as the space is authored.
+  it('completes a list’s row named the way a binding names it', () => {
+    const authored = authoring.authorSpace(listWith([authoring.onClick(), retry('{{ jobRows.item.id }}')]));
+
+    expect(authored.warnings).toEqual([]);
+    expect(JSON.stringify(authored.schema)).toContain('{{ list_jobRows.item.id }}');
   });
 
   it('finds it wherever it sits in the template', () => {

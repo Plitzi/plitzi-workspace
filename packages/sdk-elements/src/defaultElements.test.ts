@@ -5,7 +5,7 @@ import { defaultElements } from './index';
 
 /**
  * What is declared and has no component of its own here: the parts their element draws (a list draws its rows, a tab
- * container its tabs, an A/B test its variants, a disclosure its summary), and the SDK, which its app registers. Anything else declared is authored by type, and a type
+ * container its tabs, an A/B test its variants, a disclosure its summary, a table its columns), and the SDK, which its app registers. Anything else declared is authored by type, and a type
  * the runtime has no component for draws nothing, without a word — `chart` did, on every page that used one.
  */
 const DRAWN_ELSEWHERE = new Set([
@@ -17,6 +17,7 @@ const DRAWN_ELSEWHERE = new Set([
   'dropdownPopup',
   'variantItem',
   'disclosureSummary',
+  'tableColumn',
   'plitziSdk'
 ]);
 

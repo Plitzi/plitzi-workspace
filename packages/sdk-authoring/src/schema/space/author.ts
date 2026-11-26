@@ -13,6 +13,7 @@ import { familyOf } from '../pageFamily';
 import { refusalOf, SpaceRefusedError } from '../refusals';
 import { didYouMean } from '../suggest';
 import { assertSpaceValid, validateSpace } from '../validate';
+import { completeRowNames } from './rowNames';
 import { writtenAt } from '../writtenAt';
 import {
   assertChannels,
@@ -424,6 +425,9 @@ export class SpaceAuthor {
       pageFolders,
       components: Object.fromEntries(declared.map(component => [component.id, component]))
     };
+
+    // A row is named in a template as in a binding (`r.item`): completed here, before anything reads the documents.
+    completeRowNames([schema.flat, ...declared.map(component => component.flat)]);
 
     return { schema, style };
   }

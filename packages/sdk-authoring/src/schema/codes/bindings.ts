@@ -103,7 +103,7 @@ export const BINDING_CODES = {
   'template-short-source': {
     kind: 'refused',
     means: 'a source named without its prefix inside a template or a step',
-    fix: "the full name: `apiContainer_stats`, `list_rows` — a list's row, `r.inTemplate.item`"
+    fix: "the full name: `apiContainer_stats`, `list_rows` — a list's row is `r.item`, completed in a template too"
   },
   'template-source-out-of-scope': {
     kind: 'refused',
