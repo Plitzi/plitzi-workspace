@@ -1,5 +1,5 @@
 import { GLOBAL_SOURCES as RUNTIME_GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource';
-import { templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { templatePaths, templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
 
 import { AuthoringError } from './codes';
@@ -414,8 +414,8 @@ export const activeOn = (
 };
 
 /**
- * The source a condition is bound through: a global it reads (a component's props among them), else the element whose source it reads first — by its
- * id, as a binding names one (`list_dots` is `dots`). The binding follows every name its template reads, so this
+ * The source a condition is bound through: a global it reads (a component's props among them), else the element whose
+ * source it reads first — by its id, as a binding names one (`list_dots` is `dots`, and a row's `dots.item` too). The binding follows every name its template reads, so this
  * one only has to be one of them.
  */
 const conditionSource = (template: string): string | undefined => {
@@ -428,8 +428,15 @@ const conditionSource = (template: string): string | undefined => {
   }
 
   const element = roots.find(root => root.includes('_'));
+  if (element) {
+    return element.slice(element.indexOf('_') + 1);
+  }
 
-  return element?.slice(element.indexOf('_') + 1);
+  // A row read by its short name, `rows.item` (`r.item`): the template is completed when the space is written, the
+  // source is the repeater's id already.
+  const row = templatePaths(template).find(path => /^[^.]+\.(item|index)(\.|$)/.test(path));
+
+  return row?.split('.')[0];
 };
 
 /**

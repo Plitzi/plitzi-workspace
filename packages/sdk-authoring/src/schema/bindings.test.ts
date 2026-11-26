@@ -242,6 +242,9 @@ describe('activeWhen', () => {
     expect(activeWhen(dot, 'list_dots.index == 0').source).toBe('dots');
     // Inside a component, what its instance hands in: read as variantFrom(dot, 'props', …) would be.
     expect(activeWhen(dot, '{{ props.featured }}').source).toBe('props');
+    // A row by the name `r.item` gives it, completed when the space is written: refused as reading nothing once.
+    expect(activeWhen(dot, '{{ plans.item.featured }}').source).toBe('plans');
+    expect(activeWhen(dot, 'ent-plans.index == 0').source).toBe('ent-plans');
   });
 
   it('is refused a condition that reads nothing', () => {
