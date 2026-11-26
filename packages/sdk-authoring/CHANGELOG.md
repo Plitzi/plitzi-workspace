@@ -1,5 +1,9 @@
 # @plitzi/sdk-authoring
 
+## 0.39.17
+
+No changes in this release.
+
 ## 0.39.16
 
 ### Patch Changes
