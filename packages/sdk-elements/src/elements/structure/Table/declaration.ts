@@ -42,7 +42,11 @@ const declaration = elementDeclaration<TableAttributes>()({
         base: { default: { width: '100%', 'border-collapse': 'collapse', 'text-align': 'left' } },
         caption: { default: { 'text-align': 'left', 'padding-bottom': '8px' } },
         head: {
-          default: { 'border-bottom-width': '1px', 'border-bottom-style': 'solid', 'border-bottom-color': 'currentColor' }
+          default: {
+            'border-bottom-width': '1px',
+            'border-bottom-style': 'solid',
+            'border-bottom-color': 'currentColor'
+          }
         },
         row: {
           default: {
