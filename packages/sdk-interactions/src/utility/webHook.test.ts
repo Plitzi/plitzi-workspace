@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { onAuthFailure } from '@plitzi/sdk-shared/auth';
 import { queryCache } from '@plitzi/sdk-shared/queries';
 
 import webHook from './webHook';
@@ -44,7 +45,63 @@ afterEach(() => {
   invalidateAfterWrite.mockClear();
 });
 
+const answers = (...statuses: number[]) => {
+  for (const status of statuses) {
+    fetchMock.mockResolvedValueOnce({
+      ok: status < 400,
+      status,
+      json: () => Promise.resolve(status === 401 ? { error: 'Authentication required', reason: 'missing' } : { ok: 1 })
+    });
+  }
+};
+
+const base = {
+  url: 'https://api.test/spaces/7',
+  method: 'post',
+  body: {},
+  authorizationToken: '',
+  credentials: 'include'
+};
+
 describe('webHook', () => {
+  // A tab back after its token's life: the click was answered "Authentication required" by a session that one renewal
+  // later was good, and the flow said so in a toast.
+  it('asks a refused request again, once, when auth renewed the session because of it', async () => {
+    const reasons: string[] = [];
+    const stop = onAuthFailure(({ reason }) => {
+      reasons.push(reason);
+
+      return true;
+    });
+    answers(401, 200);
+
+    const { response } = await call(base);
+    stop();
+
+    expect(response).toEqual({ status: 200, data: { ok: 1 } });
+    expect(reasons).toEqual(['missing']);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('answers the refusal as it was when the session ended, when it carries its own token, or the second time', async () => {
+    let renews = false;
+    const stop = onAuthFailure(() => renews);
+
+    answers(401);
+    expect((await call(base)).response).toMatchObject({ status: 401 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    renews = true;
+    answers(401);
+    expect((await call({ ...base, authorizationToken: 'a-token' })).response).toMatchObject({ status: 401 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    answers(401, 401);
+    expect((await call(base)).response).toMatchObject({ status: 401 });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    stop();
+  });
+
   it('hands on any answer, an error status included, for the next step to read', async () => {
     const { response } = await send({ method: 'post' }, 401);
 

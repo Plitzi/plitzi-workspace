@@ -56,7 +56,7 @@ import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import clsx from 'clsx';
 import { Kind, OperationTypeNode } from 'graphql';
 import { createClient } from 'graphql-ws';
-import { Children, isValidElement, useCallback, useEffect, useMemo } from 'react';
+import { Children, isValidElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { BrowserRouter, useLocation } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -72,9 +72,11 @@ import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 import { ThemeProvider } from '@plitzi/sdk-shared/theme/react';
 import AppMain from '@pmodules/App/AppMain';
-import { createAuthFailureLink } from '@pmodules/Network/helpers/authFailureLink';
+import { createCredential } from '@pmodules/Network/helpers/credential';
 import customFetch from '@pmodules/Network/helpers/customFetch';
+import { createOutdatedLink } from '@pmodules/Network/helpers/outdatedLink';
 import { versionedFetch } from '@pmodules/Network/helpers/platformVersion';
+import { CREDENTIAL_HEADER, renewingFetch } from '@pmodules/Network/helpers/renewingFetch';
 import { createStripTypenameLink } from '@pmodules/Network/helpers/stripTypename';
 
 import { getEnvironmentServer } from './config';
@@ -164,6 +166,13 @@ const App = (props: AppProps) => {
   const [instanceId, setInstanceId] = useStorage(`web_${webId}_state.instanceId`, '', 'sessionStorage');
   const [debugMode, setDebugMode] = useStorage('builder-state.debugMode', false, 'localStorage', debugModeProp);
   const server = useMemo(() => getEnvironmentServer(serverProp), [serverProp]);
+  // One for the builder's life: its client reads the credential as each request leaves, so a renewal reaches every
+  // request without making the client again — which dropped its cache and its subscriptions on every renewal.
+  const [credential] = useState(() => createCredential(userKey));
+
+  useEffect(() => {
+    credential.set(userKey);
+  }, [credential, userKey]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -215,13 +224,16 @@ const App = (props: AppProps) => {
       }
 
       const cache = new InMemoryCache();
-      const httpWithUploadLink = new UploadHttpLink({ uri: server.serverUrl, fetch: versionedFetch(customFetch) });
+      const httpWithUploadLink = new UploadHttpLink({
+        uri: server.serverUrl,
+        fetch: versionedFetch(renewingFetch(customFetch, credential))
+      });
       const authLink = new SetContextLink(prev => {
         const base = (prev.headers ?? {}) as Record<string, string>;
         const headers: Record<string, string> = {
           ...base,
           'plitzi-instance-id': instanceId,
-          'plitzi-access-token': userKey,
+          [CREDENTIAL_HEADER]: credential.current,
           [CLIENT_HEADER]: clientHeaderValue('builder', packageSettings.version),
           'Apollo-Require-Preflight': 'true'
         };
@@ -233,12 +245,7 @@ const App = (props: AppProps) => {
         return { headers };
       });
 
-      const mainLink = ApolloLink.from([
-        createAuthFailureLink(server.serverUrl),
-        createStripTypenameLink(),
-        authLink,
-        httpWithUploadLink
-      ]);
+      const mainLink = ApolloLink.from([createOutdatedLink(), createStripTypenameLink(), authLink, httpWithUploadLink]);
       if (!includeSubscriptions || !server.subscriptionServer) {
         return new ApolloClient({ link: mainLink, cache });
       }
@@ -247,7 +254,8 @@ const App = (props: AppProps) => {
         url: server.subscriptionServer,
         shouldRetry: () => true,
         retryAttempts: Infinity,
-        connectionParams: { authToken: webKey, instanceId, userToken: userKey },
+        // Read at each connection, so a reconnect after a renewal carries the new credential.
+        connectionParams: () => ({ authToken: webKey, instanceId, userToken: credential.current }),
         onNonLazyError: error => {
           if (error instanceof Error) {
             const { message } = error;
@@ -283,7 +291,7 @@ const App = (props: AppProps) => {
 
       return client;
     },
-    [userKey]
+    [credential]
   );
 
   const client = useMemo(

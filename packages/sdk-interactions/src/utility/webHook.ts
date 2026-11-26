@@ -1,3 +1,4 @@
+import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
 import { csrfFetch } from '@plitzi/sdk-shared/csrf';
 import { invalidateAfterWrite, queryCache, requestKey } from '@plitzi/sdk-shared/queries';
@@ -69,11 +70,13 @@ const headersOf = (given: WebHookParams['headers']): Record<string, string> =>
     : {};
 
 const send = async (
-  { url, authorizationToken, headers: extra, body: given, credentials }: WebHookParams,
+  params: WebHookParams,
   method: string,
   /** The flow's: a run superseded by a newer one (`whileRunning: 'latest'`) stops waiting for the answer. */
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  retried = false
 ): Promise<WebHookResponse> => {
+  const { url, authorizationToken, headers: extra, body: given, credentials } = params;
   const body = fieldsOf(given);
   const multipart = Object.values(body).some(value => value instanceof Blob);
   const headers: Record<string, string> = {
@@ -111,6 +114,16 @@ const send = async (
     data = await res.json();
   } catch {
     // A body that is not JSON — or no body — answers with an empty `data`, and the status still says what happened.
+  }
+
+  // A refused credential is said to auth, which renews the session or ends it now rather than at its next check — a
+  // tab back after its token's life clicked a button and was answered "Authentication required" by a session that one
+  // renewal later was good. Renewed because of it, a request whose credential is the session's cookie is asked again,
+  // once, with the cookie the renewal set; one that carries its own token (`authorizationToken`) carries the same one
+  // again, so it is answered as it was. A refused request never ran: asking it again repeats nothing.
+  const reason = authFailureFromResponse(res.status, data);
+  if (reason && (await reportAuthFailure({ reason, url })) && !retried && !authorizationToken && !signal?.aborted) {
+    return send(params, method, signal, true);
   }
 
   return { status: res.status, data };
