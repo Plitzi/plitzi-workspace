@@ -15,3 +15,10 @@ A tab back after its token's life is renewed, not answered "Authentication requi
 - **The `webHook` step** says a 401 to auth too, and asks the request again, once, when the session renewed because
   of it and its credential is the session's cookie. One that carries its own token (`authorizationToken`) is answered
   as it was.
+
+## One notification is one toast
+
+- A page in a background tab closes no toast — it runs no animation — so what it said while nobody looked was a
+  column of toasts when the person came back. A notification is now known by what it says: the same one (an
+  `addNotification` step, `useNotify`, the builder's) is not shown again while it is on screen (`@plitzi/plitzi-ui`
+  1.6.42).

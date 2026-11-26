@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.5.1",
-    "@plitzi/plitzi-ui": "^1.6.41",
+    "@plitzi/plitzi-ui": "^1.6.42",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@uiw/react-json-view": "^2.0.0-alpha.44",

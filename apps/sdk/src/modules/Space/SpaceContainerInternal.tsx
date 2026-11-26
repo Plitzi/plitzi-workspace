@@ -57,7 +57,10 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
         autoDismiss,
         placement,
         autoDismissTimeout,
-        theme: resolvedTheme
+        theme: resolvedTheme,
+        // Known by what it says: the same notification while one is on screen is not a second toast. A page in a
+        // background tab closes none, and a flow said on every refresh was a column of them when the person came back.
+        id: `${appearance}:${content}`
       });
     },
     [addToast, resolvedTheme]
