@@ -1,5 +1,25 @@
 # @plitzi/cli
 
+## 0.39.18
+
+### Patch Changes
+
+- 71ad357: The builder's refused requests renew the session again, not only the SDK's.
+
+  ## One auth failure channel per page
+  - **The builder** carries its own copy of `@plitzi/sdk-shared` beside the SDK's, and the channel a refused request is
+    said to auth through was a module of each copy: the builder reported its 401s on its own, the SDK's auth listened on
+    the other, nothing renewed and every refused query was still an "Authentication required" toast. The channel's
+    listeners are now one set per page (`Symbol.for`, as `sharedContext`), so a refusal from any copy reaches the auth of
+    any other.
+  - **Never silent again:** a refusal no listener hears is said once on the page, a listener that fails is said and
+    counted as not renewing (never a rejection a `void` caller loses), and a key another copy filled with something other
+    than the listeners is said. The builder says a renewal whose new credential never reached it in 3 s, and answers the
+    refusal instead of asking again with the credential that was refused.
+
+- Updated dependencies [71ad357]
+  - @plitzi/sdk-authoring@0.39.18
+
 ## 0.39.17
 
 ### Patch Changes

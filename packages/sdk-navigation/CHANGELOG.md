@@ -1,5 +1,14 @@
 # @plitzi/sdk-navigation
 
+## 0.39.18
+
+### Patch Changes
+
+- 71ad357: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [71ad357]
+  - @plitzi/sdk-shared@0.39.18
+
 ## 0.39.17
 
 ### Patch Changes
