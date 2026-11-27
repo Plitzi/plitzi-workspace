@@ -39,7 +39,9 @@ export default defineConfig(({ mode }) => {
       minify: devMode ? false : 'terser', // usar terser para máxima compresión
       terserOptions: {
         compress: {
-          drop_console: true, // elimina todos los console.log, console.warn, etc.
+          // The chatter goes; what tells somebody something is wrong stays (the SDK's rule, apps/sdk/vite.config.ts):
+          // React's own `console.error` of an error a boundary caught is how a production page says it.
+          drop_console: ['log', 'info', 'debug'],
           drop_debugger: true, // elimina todos los debugger;
           passes: 2 // hace múltiples pasadas de optimización para limpiar más código muerto
         },
