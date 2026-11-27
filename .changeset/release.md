@@ -11,3 +11,7 @@ The builder's refused requests renew the session again, not only the SDK's.
   the other, nothing renewed and every refused query was still an "Authentication required" toast. The channel's
   listeners are now one set per page (`Symbol.for`, as `sharedContext`), so a refusal from any copy reaches the auth of
   any other.
+- **Never silent again:** a refusal no listener hears is said once on the page, a listener that fails is said and
+  counted as not renewing (never a rejection a `void` caller loses), and a key another copy filled with something other
+  than the listeners is said. The builder says a renewal whose new credential never reached it in 3 s, and answers the
+  refusal instead of asking again with the credential that was refused.

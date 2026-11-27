@@ -61,6 +61,16 @@ export const renewingFetch =
     }
 
     const renewed = await credential.next(sent, RENEWED_CREDENTIAL_WAIT_MS);
+    if (renewed === sent) {
+      // Auth renewed, but the page did not hand the builder the new credential: asked again, it is refused again.
+      console.warn(
+        `[builder] The session was renewed, but no new credential reached the builder within ` +
+          `${String(RENEWED_CREDENTIAL_WAIT_MS)} ms: ${urlOf(input)} is answered with its refusal. The page that ` +
+          'embeds the builder must pass the renewed token as its `userKey`.'
+      );
+
+      return response;
+    }
 
     return fetchImpl(input, withCredential(init, renewed));
   };

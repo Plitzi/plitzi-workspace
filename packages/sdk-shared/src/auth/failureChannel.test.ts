@@ -78,6 +78,59 @@ describe('the failure channel', () => {
     stop();
   });
 
+  /** What hid the builder's own copy: refusals reported to no one, and nothing said about it. */
+  it('says once on the page that a refusal reached no listener', async () => {
+    vi.resetModules();
+    const fresh = await import('./failureChannel');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      expect(await fresh.reportAuthFailure({ reason: 'expired', url: 'https://server.plitzi.local/' })).toBe(false);
+      expect(await fresh.reportAuthFailure({ reason: 'expired' })).toBe(false);
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('nothing on this page listens'));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  /** Often reported with `void`: a rejection there would be an unhandled one, and the other listeners' answers lost. */
+  it('says a listener that fails and still hears the others', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const stopFailing = onAuthFailure(() => {
+      throw new Error('broken listener');
+    });
+    const stopRenewing = onAuthFailure(() => true);
+    try {
+      expect(await reportAuthFailure({ reason: 'expired' })).toBe(true);
+      expect(error).toHaveBeenCalledWith(expect.stringContaining('A listener failed'), expect.any(Error));
+    } finally {
+      stopFailing();
+      stopRenewing();
+      error.mockRestore();
+    }
+  });
+
+  it('says what another copy left under its key when it is not the set of listeners, and keeps its own', async () => {
+    const key = Symbol.for('plitzi.authFailureListeners.v1');
+    const scope: Record<symbol, unknown> = globalThis;
+    const shared = scope[key];
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      scope[key] = { listeners: [] };
+      vi.resetModules();
+      const odd = await import('./failureChannel');
+      const stop = odd.onAuthFailure(() => true);
+
+      expect(error).toHaveBeenCalledWith(expect.stringContaining('holds object, not the set of listeners'));
+      expect(await odd.reportAuthFailure({ reason: 'expired' })).toBe(true);
+      stop();
+    } finally {
+      scope[key] = shared;
+      error.mockRestore();
+    }
+  });
+
   it('matches backends of one site by registrable domain', () => {
     expect(sameRegistrableDomain('https://api.plitzi.local/auth', 'https://server.plitzi.local/graphql')).toBe(true);
     expect(sameRegistrableDomain('https://api.plitzi.local/auth', 'https://api.example.com/x')).toBe(false);

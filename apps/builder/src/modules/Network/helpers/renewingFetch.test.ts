@@ -80,6 +80,28 @@ describe('a request of the builder whose credential was refused', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
+  /** A renewal the page never hands the builder: asked again with the refused credential, it would be refused again. */
+  it('says so and answers the refusal when no renewed credential reaches the builder', async () => {
+    vi.useFakeTimers();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const credential = createCredential('old');
+      stops.push(onAuthFailure(() => true));
+      const fetchImpl = serverAccepting('new');
+
+      const answered = renewingFetch(fetchImpl, credential)(URL_, { headers: { [CREDENTIAL_HEADER]: 'old' } });
+      await vi.advanceTimersByTimeAsync(3000);
+      const response = await answered;
+
+      expect(response.status).toBe(401);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('no new credential reached the builder'));
+    } finally {
+      warn.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it('leaves every other answer alone', async () => {
     const credential = createCredential('token');
     const listener = vi.fn(() => true);

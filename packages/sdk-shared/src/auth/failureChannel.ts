@@ -22,16 +22,36 @@ const LISTENERS = Symbol.for(`plitzi.authFailureListeners.v${String(CHANNEL_VERS
  * `sdk-shared` beside the SDK's, and a module-level set made the builder's refusals reach no one — the SDK's auth
  * listened on its copy, the builder reported on its own, nothing renewed, and every refused request was an
  * "Authentication required" toast over a session a renewal would have kept.
+ *
+ * What another copy left under the key is checked rather than trusted: anything but a set is said, and this copy keeps
+ * listeners of its own — its refusals then reach only its own auth, which the message names.
  */
-const listenersOf = (
-  scope: typeof globalThis & { [LISTENERS]?: Set<AuthFailureListener> }
-): Set<AuthFailureListener> => {
-  scope[LISTENERS] ??= new Set();
+const listenersOf = (scope: typeof globalThis & { [LISTENERS]?: unknown }): Set<AuthFailureListener> => {
+  const found = scope[LISTENERS];
+  if (found === undefined) {
+    const created = new Set<AuthFailureListener>();
+    scope[LISTENERS] = created;
 
-  return scope[LISTENERS];
+    return created;
+  }
+
+  if (found instanceof Set) {
+    // Only this module writes the key, versioned by the shape of what it holds: a set under it is a set of listeners.
+    return found as Set<AuthFailureListener>;
+  }
+
+  console.error(
+    `[auth] ${LISTENERS.toString()} holds ${typeof found}, not the set of listeners every copy of @plitzi/sdk-shared ` +
+      'shares: this copy keeps its own, so a refusal it reports reaches only the auth of this copy. Something else ' +
+      'wrote that key, or a copy changed its shape without bumping CHANNEL_VERSION.'
+  );
+
+  return new Set();
 };
 
 const listeners = listenersOf(globalThis);
+
+let unheardSaid = false;
 
 /**
  * Says that a backend refused a credential. A session can end between two checks — revoked from another device, an
@@ -42,11 +62,35 @@ const listeners = listenersOf(globalThis);
  * coming back after its token's life — is answered by a renewal, and the request that was refused can be asked again,
  * once, instead of leaving its section in an error a reload would have cleared. A refused request never ran, so asking
  * it again repeats nothing.
+ *
+ * Never silent: a refusal no listener hears is said once on the page — what hid the builder's own copy of this channel
+ * — and a listener that fails is said and counted as not renewing, never a rejection the caller (often `void`) loses.
  */
 export const reportAuthFailure = async (signal: AuthFailureSignal): Promise<boolean> => {
-  const answers = await Promise.all([...listeners].map(async listener => listener(signal)));
+  if (listeners.size === 0) {
+    if (!unheardSaid && typeof window !== 'undefined') {
+      unheardSaid = true;
+      console.warn(
+        `[auth] A refused credential (${signal.reason}${signal.url ? `, ${signal.url}` : ''}) was reported, but nothing ` +
+          'on this page listens for it, so the session is not renewed. Said once; every later refusal is answered as ' +
+          'it was.'
+      );
+    }
 
-  return answers.some(answer => answer === true);
+    return false;
+  }
+
+  const answers = await Promise.allSettled([...listeners].map(async listener => listener(signal)));
+
+  return answers.some(answer => {
+    if (answer.status === 'rejected') {
+      console.error('[auth] A listener failed on a refused credential; it is counted as not renewing:', answer.reason);
+
+      return false;
+    }
+
+    return answer.value === true;
+  });
 };
 
 export const onAuthFailure = (listener: AuthFailureListener): (() => void) => {
