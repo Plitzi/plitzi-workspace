@@ -455,6 +455,43 @@ describe('BasicAuthProvider failures', () => {
     expect(provider.getState()).toBe('authenticated');
   });
 
+  /**
+   * A renewal stays `authenticated`, so no state event carried its token: what was published from the session — the
+   * builder's `userKey` — kept the one it replaced, and the builder asked with it, refused, until something re-rendered.
+   */
+  it('says the session changed when a renewal hands it a new token under the same state', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-9999));
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ error: 'Token expired', reason: 'expired' }, 401))
+      .mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    const events: string[] = [];
+    provider.on(event => events.push(event.type));
+
+    await provider.init();
+    await vi.waitFor(() => expect(provider.token?.accessToken).toBe('token'));
+
+    expect(provider.getState()).toBe('authenticated');
+    expect(events).toContain('session');
+  });
+
+  it('says nothing changed when the identity is asked again and comes back the same', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600));
+    mockFetch.mockImplementation(() =>
+      Promise.resolve(jsonResponse({ details: { id: 1, username: 'ada', permissions: ['spaceManage'] } }))
+    );
+    const events: string[] = [];
+
+    await provider.init();
+    provider.on(event => events.push(event.type));
+    await provider.revalidate(true);
+
+    expect(mockFetch).toHaveBeenCalled();
+    expect(provider.user).toMatchObject({ username: 'ada' });
+    expect(events).not.toContain('session');
+  });
+
   it('waits for the confirmation before rendering when the space asks it to', async () => {
     const provider = new BasicAuthProvider({ ...plitziApi, sessionGate: 'strict' });
     storeSession(inSeconds(3600), inSeconds(-9999));

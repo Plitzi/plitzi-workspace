@@ -56,7 +56,17 @@ const useAuth = ({ server, isHydrating = false, provider = '', settings }: UseAu
    */
   const [signedOutHere, setSignedOutHere] = useState(false);
 
+  /**
+   * Counted, never read: the session changed under a state that did not — a renewal's new token — and whoever renders
+   * from the provider (`AuthContextProvider`'s published token) must render again to read it.
+   */
+  const [, setSessionChanges] = useState(0);
+
   const handleEvent = useCallback((event: AuthEvent) => {
+    if (event.type === 'session') {
+      setSessionChanges(changes => changes + 1);
+    }
+
     if (event.type === 'logout') {
       setSignedOutHere(true);
     }

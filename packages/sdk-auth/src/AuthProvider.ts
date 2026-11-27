@@ -40,7 +40,12 @@ export type AuthEvent =
   | { type: 'state'; state: AuthState; reason?: AuthStateReason }
   | { type: 'login'; token?: TokenResult }
   | { type: 'logout' }
-  | { type: 'expired'; reason: AuthFailureReason };
+  | { type: 'expired'; reason: AuthFailureReason }
+  /**
+   * The session changed under a state that did not: a renewal's new token, another tab's, an identity loaded again.
+   * Whatever publishes the token — `auth.accessToken`, the builder's `userKey` — reads it again on this.
+   */
+  | { type: 'session' };
 
 export type AuthEventListener = (event: AuthEvent) => void;
 
@@ -645,6 +650,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
 
   /** Takes on what a grant or an identity call returned, and records that the backend confirmed it just now. */
   private adopt(result: AuthResult<U> & { ok: true }, persist = true, reason: AuthStateReason = 'granted'): void {
+    const before = this.session;
     this.session = {
       user: result.user ?? this.session.user,
       token: result.token ?? this.session.token,
@@ -657,7 +663,18 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     }
 
     this.scheduleRenewal();
-    this.setState(this.session.user || this.hasLiveToken() ? 'authenticated' : 'guest', reason);
+    const state = this.session.user || this.hasLiveToken() ? 'authenticated' : 'guest';
+    // By value: an identity asked again comes back a new object with the same person in it, which changes nothing.
+    const changed =
+      before.token?.accessToken !== this.session.token?.accessToken ||
+      JSON.stringify(before.user) !== JSON.stringify(this.session.user);
+    // A state that stays emits nothing, and a renewal stays `authenticated`: without this, what was published from the
+    // session kept the token it replaced — the builder asked with it, refused, until something else re-rendered.
+    if (this.state === state && changed) {
+      this.emit({ type: 'session' });
+    }
+
+    this.setState(state, reason);
   }
 
   /**

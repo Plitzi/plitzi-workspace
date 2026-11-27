@@ -3,6 +3,7 @@ import { use } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import { reportAuthFailure } from '@plitzi/sdk-shared/auth';
 
 import AuthContext from './AuthContext';
 import AuthContextProvider from './AuthContextProvider';
@@ -97,5 +98,71 @@ describe('which provider a page signs in with', () => {
     await login?.({ username: 'ada', password: 'pw' });
 
     expect(fetchMock).toHaveBeenCalledWith('/auth/login', expect.objectContaining({ method: 'POST' }));
+  });
+});
+
+/**
+ * The builder reads the session's token through `auth.accessToken` (its `userKey`). A renewal stays `authenticated`, and
+ * the page went on publishing the token it replaced: the builder asked with it, was refused, and said "Authentication
+ * required" over a session that had just been renewed.
+ */
+describe('the token a page publishes', () => {
+  afterEach(() => {
+    document.cookie = 'acme_session_hint=; Max-Age=0';
+  });
+
+  it('is the renewed one once a refused request renewed the session', async () => {
+    // The served session says it is alive through its hint cookie (`sessionHintCookie`); without it, it is gone.
+    document.cookie = `acme_session_hint=${String(Math.floor(Date.now() / 1000) + 3600)}`;
+    localStorage.setItem(
+      'plitzi_auth_session',
+      JSON.stringify({
+        version: 1,
+        user: { id: 1, username: 'ada' },
+        token: { accessToken: 'first', expiresAt: Math.floor(Date.now() / 1000) + 3600, refreshToken: 'refresh' },
+        validatedAt: Math.floor(Date.now() / 1000)
+      })
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(input =>
+        Promise.resolve(
+          input === '/auth/refresh'
+            ? new Response(
+                JSON.stringify({
+                  details: { id: 1, username: 'ada' },
+                  access_token: 'renewed',
+                  expire_at: Math.floor(Date.now() / 1000) + 3600,
+                  refresh_token: 'refresh-2'
+                })
+              )
+            : new Response(JSON.stringify({ details: { id: 1, username: 'ada' } }))
+        )
+      )
+    );
+    const published: (string | undefined)[] = [];
+    let state: string | undefined;
+    const Probe = () => {
+      const auth = use(AuthContext);
+      published.push(auth.user?.accessToken);
+      state = auth.state;
+
+      return null;
+    };
+
+    render(
+      <StoreProvider value={{ schema: { settings: {}, variables: [] }, navigation: { queryParams: {} } }}>
+        <AuthContextProvider server={serverWith(served)}>
+          <Probe />
+        </AuthContextProvider>
+      </StoreProvider>
+    );
+    // Settled, as a builder left open is: nothing else is about to render the page again.
+    await vi.waitFor(() => expect(state).toBe('authenticated'));
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(published.at(-1)).toBe('first');
+
+    expect(await reportAuthFailure({ reason: 'expired', url: '/auth/session' })).toBe(true);
+    await vi.waitFor(() => expect(published.at(-1)).toBe('renewed'));
   });
 });
