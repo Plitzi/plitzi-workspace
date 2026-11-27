@@ -60,6 +60,24 @@ describe('the failure channel', () => {
     stopRenewing();
   });
 
+  /**
+   * The builder carries its own `sdk-shared` beside the SDK's: a refusal it reported reached no listener, nothing
+   * renewed, and each refused request was an "Authentication required" toast.
+   */
+  it('is one channel for every copy of it on the page', async () => {
+    vi.resetModules();
+    const otherCopy = await import('./failureChannel');
+    const renew = vi.fn(() => true);
+    const stop = onAuthFailure(renew);
+
+    expect(otherCopy.reportAuthFailure).not.toBe(reportAuthFailure);
+    expect(await otherCopy.reportAuthFailure({ reason: 'expired', url: 'https://server.plitzi.local/graphql' })).toBe(
+      true
+    );
+    expect(renew).toHaveBeenCalledWith({ reason: 'expired', url: 'https://server.plitzi.local/graphql' });
+    stop();
+  });
+
   it('matches backends of one site by registrable domain', () => {
     expect(sameRegistrableDomain('https://api.plitzi.local/auth', 'https://server.plitzi.local/graphql')).toBe(true);
     expect(sameRegistrableDomain('https://api.plitzi.local/auth', 'https://api.example.com/x')).toBe(false);

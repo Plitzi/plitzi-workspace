@@ -9,7 +9,29 @@ export type AuthFailureSignal = {
 /** Hears a refusal, and answers whether it renewed the session because of it — or nothing, for a listener that did not. */
 export type AuthFailureListener = (signal: AuthFailureSignal) => Promise<boolean> | boolean | undefined;
 
-const listeners = new Set<AuthFailureListener>();
+/**
+ * Bumped when a signal or a listener's answer changes shape in a way an older copy could not read: copies on either
+ * side of the bump then keep listeners of their own rather than handing each other what they would misread.
+ */
+const CHANNEL_VERSION = 1;
+
+const LISTENERS = Symbol.for(`plitzi.authFailureListeners.v${String(CHANNEL_VERSION)}`);
+
+/**
+ * The listeners every copy of this module on a page shares. One page holds more than one: the builder carries its own
+ * `sdk-shared` beside the SDK's, and a module-level set made the builder's refusals reach no one — the SDK's auth
+ * listened on its copy, the builder reported on its own, nothing renewed, and every refused request was an
+ * "Authentication required" toast over a session a renewal would have kept.
+ */
+const listenersOf = (
+  scope: typeof globalThis & { [LISTENERS]?: Set<AuthFailureListener> }
+): Set<AuthFailureListener> => {
+  scope[LISTENERS] ??= new Set();
+
+  return scope[LISTENERS];
+};
+
+const listeners = listenersOf(globalThis);
 
 /**
  * Says that a backend refused a credential. A session can end between two checks — revoked from another device, an
