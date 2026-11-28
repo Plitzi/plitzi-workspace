@@ -1,5 +1,16 @@
 # @plitzi/sdk-interactions
 
+## 0.39.20
+
+### Patch Changes
+
+- 276f805: Released with every `@plitzi` package at this version. What changed in each, and what to do when you upgrade, is in
+  `@plitzi/cli`'s `CHANGELOG.md`: one copy of the notes, not one per package.
+- Updated dependencies [276f805]
+  - @plitzi/sdk-auth@0.39.20
+  - @plitzi/sdk-event-bridge@0.39.20
+  - @plitzi/sdk-shared@0.39.20
+
 ## 0.39.19
 
 ### Patch Changes

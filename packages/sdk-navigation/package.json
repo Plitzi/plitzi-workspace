@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-navigation",
-  "version": "0.39.19",
+  "version": "0.39.20",
   "license": "AGPL-3.0",
   "files": [
     "dist"
