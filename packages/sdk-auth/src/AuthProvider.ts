@@ -521,7 +521,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   }
 
   /** What a refusal does to the session — and whether it was renewed because of it, so the request may be asked again. */
-  private async recover(reason: AuthFailureReason): Promise<boolean> {
+  private async recover(reason: AuthFailureReason, credential?: string): Promise<boolean> {
     if (reason === 'network') {
       this.offline = true;
 
@@ -532,6 +532,14 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     // no session in this browser there is nothing to renew or end: asking anyway is a refresh that cannot succeed.
     if (!this.hasEvidence()) {
       return false;
+    }
+
+    // A credential this session already replaced was refused because it was replaced — `revoked` too, its row
+    // rewritten by the renewal. The live one answers it: renewing again rotated the token each retry had just been
+    // handed, and a tab back after a day refused its own retries five times over.
+    const current = this.session.token?.accessToken;
+    if (credential !== undefined && current && credential !== current && this.hasLiveToken()) {
+      return true;
     }
 
     if (this.renewable(reason)) {
@@ -837,11 +845,11 @@ abstract class AuthProvider<U = Record<string, unknown>> {
 
     const unsubscribe = this.store.subscribe(stored => this.adoptFromStorage(stored));
     // Whatever request just got refused knows about this session sooner than any timer does.
-    const unsubscribeFailures = onAuthFailure(({ reason, url }) => {
+    const unsubscribeFailures = onAuthFailure(({ reason, url, credential }) => {
       const endpoints = this.endpoints.filter(Boolean);
 
       return endpoints.length === 0 || endpoints.some(endpoint => sameRegistrableDomain(endpoint, url))
-        ? this.recover(reason)
+        ? this.recover(reason, credential)
         : false;
     });
     document.addEventListener('visibilitychange', onVisibility);

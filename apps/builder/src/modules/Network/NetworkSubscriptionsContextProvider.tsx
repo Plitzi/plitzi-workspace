@@ -1,8 +1,11 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { use, useCallback, useMemo, useRef } from 'react';
 
+import { authFailureFromResponse } from '@plitzi/sdk-shared/auth';
 import { isRTEvent, RTEvent } from '@plitzi/sdk-shared/websockets';
 import useCollaborators from '@pmodules/Collaboration/hooks/useCollaborators';
+import BuilderCredentialContext from '@pmodules/Network/contexts/BuilderCredentialContext';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
+import { renewedCredential } from '@pmodules/Network/helpers/renewedCredential';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
 
@@ -27,7 +30,10 @@ const NetworkSubscriptionsContextProvider = ({
   // A plain map, not state: registering a listener is not a render input, and several listeners per event
   // (one collaborator area each) have to coexist without re-rendering the tree that holds them.
   const callbacksRef = useRef(new Map<RTEvent, Map<string, RTCallback>>());
-  const { webKey, instanceId, server, userKey } = useBuilderNetwork();
+  const { webKey, instanceId, server } = useBuilderNetwork();
+  const credential = use(BuilderCredentialContext);
+  // The credential the socket was last opened with: the one a refusal of its session names.
+  const opened = useRef('');
 
   const registerCallback = useCallback(
     <E extends RTEvent>(type: E, callback: RTCallback<E>, subscriberId: string = instanceId) => {
@@ -77,12 +83,28 @@ const NetworkSubscriptionsContextProvider = ({
     [instanceId, resetCollaborators]
   );
 
+  const url = useCallback(() => {
+    opened.current = credential.current;
+
+    return `${server.websocketServer}?instanceId=${instanceId}&token=${webKey}&userToken=${opened.current}`;
+  }, [credential, instanceId, server.websocketServer, webKey]);
+
+  const onSessionRefused = useCallback(
+    async (reason: string) =>
+      (await renewedCredential(credential, opened.current, {
+        reason: authFailureFromResponse(401, { reason }) ?? 'expired',
+        url: server.websocketServer
+      })) !== undefined,
+    [credential, server.websocketServer]
+  );
+
   const { push } = useWebsocket({
     isBinary: true,
-    url: `${server.websocketServer}?instanceId=${instanceId}&token=${webKey}&userToken=${userKey}`,
+    url,
     protocols: ['realtime-ws'],
     processMessage,
-    connectMode: includeRealTime ? 'auto' : 'manual'
+    connectMode: includeRealTime ? 'auto' : 'manual',
+    onSessionRefused
   });
 
   const subscriptionsValue = useMemo(

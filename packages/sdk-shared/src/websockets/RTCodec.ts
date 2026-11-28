@@ -11,7 +11,13 @@ export enum RTEventCloseCode {
   UNKNOWN = 4000,
   NOT_AUTHORISED = 4001,
   INSTANCE_ID_NOT_FOUND = 4002,
-  USER_TOKEN_NOT_FOUND = 4003
+  USER_TOKEN_NOT_FOUND = 4003,
+  /**
+   * The person's session refused the credential the socket was opened with — expired, or replaced by a renewal — not
+   * the space or the role: the client renews and opens it again with the renewed one. Its reason is the refusal's
+   * (`expired`, `revoked`…). `NOT_AUTHORISED` stays what no renewal changes.
+   */
+  SESSION_REFUSED = 4004
 }
 
 export enum RTEvent {

@@ -1,12 +1,11 @@
-import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { authFailureFromResponse } from '@plitzi/sdk-shared/auth';
+
+import { renewedCredential } from './renewedCredential';
 
 import type { Credential } from './credential';
 
 /** The header the builder's requests carry the person's credential in (`App`'s link, the uploads, the deploys). */
 export const CREDENTIAL_HEADER = 'plitzi-access-token';
-
-/** How long a renewed session may take to reach the builder from the page that renewed it. */
-const RENEWED_CREDENTIAL_WAIT_MS = 3000;
 
 type WithHeaders = { headers?: HeadersInit };
 
@@ -38,10 +37,10 @@ const withCredential = <Init extends WithHeaders>(init: Init | undefined, creden
  *
  * A tab left in the background past its token's life — a laptop that slept, a renewal timer the browser froze — comes
  * back and asks everything again at once with the token it had: each refused, and each refusal was a toast saying
- * "Authentication required" over a session that a renewal answered a moment later. The refusal is said to auth
- * (`reportAuthFailure`) — the GraphQL server's 401 too, which carries its errors rather than a reason — and when auth
- * renewed because of it, the request waits for the page to hand the builder its new credential and is asked again,
- * once. A refusal that ends the session is answered as it was.
+ * "Authentication required" over a session that a renewal answered a moment later. The refusal is said to auth with
+ * the credential it carried (`renewedCredential`) — the GraphQL server's 401 too, which carries its errors rather than
+ * a reason — and when auth renewed because of it, the request waits for the page to hand the builder its new
+ * credential and is asked again, once. A refusal that ends the session is answered as it was.
  */
 export const renewingFetch =
   <Init extends WithHeaders>(
@@ -56,19 +55,8 @@ export const renewingFetch =
     }
 
     const reason = authFailureFromResponse(response.status, await bodyOf(response));
-    if (!reason || !(await reportAuthFailure({ reason, url: urlOf(input) }))) {
-      return response;
-    }
-
-    const renewed = await credential.next(sent, RENEWED_CREDENTIAL_WAIT_MS);
-    if (renewed === sent) {
-      // Auth renewed, but the page did not hand the builder the new credential: asked again, it is refused again.
-      console.warn(
-        `[builder] The session was renewed, but no new credential reached the builder within ` +
-          `${String(RENEWED_CREDENTIAL_WAIT_MS)} ms: ${urlOf(input)} is answered with its refusal. The page that ` +
-          'embeds the builder must pass the renewed token as its `userKey`.'
-      );
-
+    const renewed = reason && (await renewedCredential(credential, sent, { reason, url: urlOf(input) }));
+    if (!renewed) {
       return response;
     }
 

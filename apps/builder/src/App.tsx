@@ -72,12 +72,14 @@ import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 import { ThemeProvider } from '@plitzi/sdk-shared/theme/react';
 import AppMain from '@pmodules/App/AppMain';
+import BuilderCredentialContext from '@pmodules/Network/contexts/BuilderCredentialContext';
 import { createCredential } from '@pmodules/Network/helpers/credential';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 import { createOutdatedLink } from '@pmodules/Network/helpers/outdatedLink';
 import { versionedFetch } from '@pmodules/Network/helpers/platformVersion';
 import { CREDENTIAL_HEADER, renewingFetch } from '@pmodules/Network/helpers/renewingFetch';
 import { createStripTypenameLink } from '@pmodules/Network/helpers/stripTypename';
+import { subscriptionRenewal } from '@pmodules/Network/helpers/subscriptionRenewal';
 
 import { getEnvironmentServer } from './config';
 import packageSettings from '../package.json';
@@ -250,12 +252,15 @@ const App = (props: AppProps) => {
         return new ApolloClient({ link: mainLink, cache });
       }
 
+      const renewal = subscriptionRenewal(credential, server.subscriptionServer);
       const subscriptionClient = createClient({
         url: server.subscriptionServer,
         shouldRetry: () => true,
         retryAttempts: Infinity,
         // Read at each connection, so a reconnect after a renewal carries the new credential.
-        connectionParams: () => ({ authToken: webKey, instanceId, userToken: credential.current }),
+        connectionParams: () => ({ authToken: webKey, instanceId, userToken: renewal.credentialToSend() }),
+        retryWait: renewal.retryWait,
+        on: renewal.on,
         onNonLazyError: error => {
           if (error instanceof Error) {
             const { message } = error;
@@ -351,21 +356,23 @@ const App = (props: AppProps) => {
   const childrenParsed = useMemo(
     () =>
       client && (
-        <ApolloProvider client={client}>
-          <ComponentProvider localCustomComponents={localComponents} localComponents={sdkComponents}>
-            <ToastProvider>
-              <AppMain
-                {...omit(props, ['children', 'server'])}
-                debugMode={debugMode}
-                server={server}
-                instanceId={instanceId}
-                webId={webId}
-              />
-            </ToastProvider>
-          </ComponentProvider>
-        </ApolloProvider>
+        <BuilderCredentialContext value={credential}>
+          <ApolloProvider client={client}>
+            <ComponentProvider localCustomComponents={localComponents} localComponents={sdkComponents}>
+              <ToastProvider>
+                <AppMain
+                  {...omit(props, ['children', 'server'])}
+                  debugMode={debugMode}
+                  server={server}
+                  instanceId={instanceId}
+                  webId={webId}
+                />
+              </ToastProvider>
+            </ComponentProvider>
+          </ApolloProvider>
+        </BuilderCredentialContext>
       ),
-    [client, debugMode, instanceId, localComponents, props, server, webId]
+    [client, credential, debugMode, instanceId, localComponents, props, server, webId]
   );
 
   // Same floor as the SDK, minus what the builder is not: an editor opens in edit mode, not preview, the head of the

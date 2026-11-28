@@ -33,9 +33,11 @@ describe('a request of the builder whose credential was refused', () => {
   it('is said to auth, waits for the renewed credential and is asked again with it, once', async () => {
     const credential = createCredential('old');
     const reasons: string[] = [];
+    const refused: (string | undefined)[] = [];
     stops.push(
-      onAuthFailure(({ reason }) => {
+      onAuthFailure(({ reason, credential: carried }) => {
         reasons.push(reason);
+        refused.push(carried);
         // The page renews, and hands the builder its new token a moment after.
         setTimeout(() => credential.set('new'), 10);
 
@@ -48,6 +50,8 @@ describe('a request of the builder whose credential was refused', () => {
 
     expect(response.status).toBe(200);
     expect(reasons).toEqual(['expired']);
+    // What lets auth tell a refusal of the live token from one of a token a renewal already replaced.
+    expect(refused).toEqual(['old']);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(fetchImpl.mock.calls[1]?.[1]?.headers).toMatchObject({ [CREDENTIAL_HEADER]: 'new' });
   });

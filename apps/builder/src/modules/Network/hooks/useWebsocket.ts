@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RTCodec, isRTEventCloseCode, RTEvent, RTEventCloseCode } from '@plitzi/sdk-shared/websockets';
 
@@ -6,26 +6,41 @@ import type { RTMessageManagedClient } from '@plitzi/sdk-shared/websockets';
 
 export type UseWebsocketProps<T> = {
   isBinary?: boolean;
-  url: string;
+  /**
+   * Read as each connection opens, never kept: what the address carries — the person's credential — is renewed under
+   * a socket that outlives it, and an address captured in a render reopened the socket with the token it replaced.
+   */
+  url: () => string;
   protocols?: string[];
   processMessage: ((data: T) => void) | null;
   initMessage?: { type: RTEvent.INIT; payload: undefined };
   retryReconnect?: number;
   connectMode?: 'auto' | 'manual';
+  /**
+   * The server refused the session the socket was opened with (`SESSION_REFUSED`, its reason the refusal's): answers
+   * whether it was renewed, and the socket opens again at once — with the renewed credential, `url` being read then.
+   * Without it, or answered `false`, the socket stays closed, as it does for any refusal.
+   */
+  onSessionRefused?: (reason: string) => Promise<boolean>;
 };
 
 const useWebsocket = <T = unknown>({
   isBinary = false,
-  url = '',
+  url,
   protocols = [],
   processMessage = null,
   initMessage = { type: RTEvent.INIT, payload: undefined },
   retryReconnect = Infinity,
-  connectMode = 'auto'
+  connectMode = 'auto',
+  onSessionRefused
 }: UseWebsocketProps<T>) => {
   const [ws, setWs] = useState<WebSocket | undefined>(undefined);
   const rtCodec = useMemo(() => (isBinary ? new RTCodec() : undefined), [isBinary]);
   const [currentRetry, setCurrentRetry] = useState(0);
+  // Set by a renewal-driven reopen, cleared by the first message the server sends — it sends none before it accepted
+  // the session. A renewed credential refused again before that is not the session's doing, and renewing once more
+  // would loop.
+  const renewedUnheard = useRef(false);
 
   const push = useCallback(
     (data: RTMessageManagedClient) => {
@@ -44,6 +59,7 @@ const useWebsocket = <T = unknown>({
 
   const handleProcess = useCallback(
     (ev: MessageEvent<T>) => {
+      renewedUnheard.current = false;
       let data = ev.data;
       if (isBinary) {
         data = rtCodec?.decode(data as ArrayBuffer) as T;
@@ -69,12 +85,32 @@ const useWebsocket = <T = unknown>({
     [ws]
   );
 
+  const reopenRenewed = async (reason: string) => {
+    if (!onSessionRefused) {
+      return;
+    }
+
+    if (renewedUnheard.current) {
+      console.warn(
+        `[builder] The realtime socket was refused again (${reason}) with the credential a renewal had just handed ` +
+          'it: it stays closed, and collaborators are not shown until the page is loaded again.'
+      );
+
+      return;
+    }
+
+    if (await onSessionRefused(reason)) {
+      renewedUnheard.current = true;
+      setWs(connect());
+    }
+  };
+
   const connect = () => {
     if (retryReconnect !== Infinity && currentRetry > retryReconnect) {
       return undefined;
     }
 
-    const ws = new WebSocket(url, protocols);
+    const ws = new WebSocket(url(), protocols);
     if (isBinary) {
       ws.binaryType = 'arraybuffer';
     }
@@ -97,6 +133,14 @@ const useWebsocket = <T = unknown>({
       const { reason } = e;
       const code = isRTEventCloseCode(e.code) ? e.code : RTEventCloseCode.UNKNOWN;
       if (code === RTEventCloseCode.NORMAL || code === RTEventCloseCode.AWAY) {
+        return;
+      }
+
+      if (code === RTEventCloseCode.SESSION_REFUSED) {
+        reopenRenewed(reason).catch((error: unknown) => {
+          console.error('[builder] The realtime socket was not opened again after its session was refused:', error);
+        });
+
         return;
       }
 
@@ -133,10 +177,11 @@ const useWebsocket = <T = unknown>({
         internalWs.close(1000);
       }
     };
-    // `connect` is a function of each render: as a dependency it would open a socket on every one. What it opens with
-    // — the address, the mode — is here, and a socket already open is the state it set.
+    // `connect` is a function of each render: as a dependency it would open a socket on every one. The address is read
+    // as it opens, never a reason to close one that is open — a renewed token reaches the next connection, and the
+    // server checked this one's when it accepted it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ws, url, close, connectMode]);
+  }, [ws, close, connectMode]);
 
   useEffect(() => {
     if (ws) {

@@ -4,6 +4,13 @@ export type AuthFailureSignal = {
   reason: AuthFailureReason;
   /** The request that was refused. Auth listens only to refusals from its own backend — see `sameRegistrableDomain`. */
   url?: string;
+  /**
+   * The credential the refused request carried, when the reporter knows it. A refusal of one the session has already
+   * replaced says nothing about the session: it is answered by the renewal that replaced it, never by another — each
+   * renewal rotates the token, so renewing again for every request still in flight with the old one refused their
+   * retries in turn.
+   */
+  credential?: string;
 };
 
 /** Hears a refusal, and answers whether it renewed the session because of it — or nothing, for a listener that did not. */

@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
 
+import { reportAuthFailure } from '@plitzi/sdk-shared/auth';
+
 import BasicAuthProvider from './BasicAuthProvider';
 
 const mockFetch = vi.fn<typeof fetch>();
@@ -473,6 +475,40 @@ describe('BasicAuthProvider failures', () => {
 
     expect(provider.getState()).toBe('authenticated');
     expect(events).toContain('session');
+  });
+
+  /**
+   * A tab back after a day asked everything at once with the token it had. The first refusal renewed; each later one
+   * renewed again, and every renewal rotated the token the retries had just been handed — refused in turn, the
+   * "Authentication required" the renewal was meant to spare.
+   */
+  it('answers a refusal of a token it already replaced without renewing again', async () => {
+    // Its own refresh address: providers of other tests still listen on the page's channel.
+    const refreshUrl = `${plitziApi.refreshUrl}?replaced`;
+    const provider = new BasicAuthProvider({ ...plitziApi, refreshUrl });
+    storeSession(inSeconds(3600));
+    mockFetch.mockImplementation(input =>
+      Promise.resolve(
+        input === refreshUrl
+          ? jsonResponse(session(inSeconds(3600)))
+          : jsonResponse({ details: { id: 1, username: 'ada', permissions: ['spaceManage'] } })
+      )
+    );
+    const refreshes = () => mockFetch.mock.calls.filter(([input]) => input === refreshUrl).length;
+    await provider.init();
+
+    const refused = { url: plitziApi.userUrl, credential: 'stored' };
+    expect(await reportAuthFailure({ reason: 'expired', ...refused })).toBe(true);
+    expect(provider.token?.accessToken).toBe('token');
+
+    // The requests still in flight with the replaced token — `revoked` too, what its rewritten row answers.
+    expect(await reportAuthFailure({ reason: 'expired', ...refused })).toBe(true);
+    expect(await reportAuthFailure({ reason: 'revoked', ...refused })).toBe(true);
+
+    expect(refreshes()).toBe(1);
+    expect(provider.getState()).toBe('authenticated');
+    expect(provider.token?.accessToken).toBe('token');
+    provider.dispose();
   });
 
   it('says nothing changed when the identity is asked again and comes back the same', async () => {
